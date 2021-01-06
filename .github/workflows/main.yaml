@@ -28,10 +28,16 @@ jobs:
         run: go build -ldflags "-s -w"
       - name: Debug
         run: ls
-      - name: Compress binaries
+      - name: Compress windows binary
+        if: startsWith(matrix.os, 'windows')
         uses: svenstaro/upx-action@v2
         with:
-          file: furbnicator*
+          file: furbnicator.exe
+      - name: Compress linux/max binary
+        if: !startsWith(matrix.os, 'windows')
+        uses: svenstaro/upx-action@v2
+        with:
+          file: furbnicator
       - name: Upload assets
         uses: actions/upload-artifact@v2
         with:
