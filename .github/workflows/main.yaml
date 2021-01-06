@@ -31,7 +31,7 @@ jobs:
       - name: Compress binaries
         uses: svenstaro/upx-action@v2
         with:
-          file: furbnicator
+          file: furbnicator*
       - name: Upload assets
         uses: actions/upload-artifact@v2
         with:
