@@ -26,6 +26,8 @@ jobs:
         uses: actions/checkout@v2
       - name: Build
         run: go build
+      - name: Debug
+        run: ls -la
       - name: Compress binaries
         uses: svenstaro/upx-action@v2
         with:
