@@ -26,8 +26,6 @@ jobs:
         uses: actions/checkout@v2
       - name: Build
         run: go build -ldflags "-s -w"
-      - name: Debug
-        run: ls
       - name: Compress windows binary
         if: startsWith(matrix.os, 'windows')
         uses: svenstaro/upx-action@v2
@@ -38,6 +36,7 @@ jobs:
         uses: svenstaro/upx-action@v2
         with:
           file: furbnicator
+          # We don't strip on macOS since it ... doesn't work.
           strip: ${{ !startsWith(matrix.os, 'macOS') }}
       - name: Upload windows assets
         if: startsWith(matrix.os, 'windows')
