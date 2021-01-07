@@ -34,7 +34,7 @@ jobs:
         with:
           file: furbnicator.exe
       - name: Compress other binary
-        if: ! startsWith(matrix.os, 'windows')
+        if: ${{ !startsWith(matrix.os, 'windows') }}
         uses: svenstaro/upx-action@v2
         with:
           file: furbnicator
