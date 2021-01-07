@@ -38,6 +38,7 @@ jobs:
         uses: svenstaro/upx-action@v2
         with:
           file: furbnicator
+          strip: ${{ !startsWith(matrix.os, 'macOS') }}
       - name: Upload windows assets
         if: startsWith(matrix.os, 'windows')
         uses: actions/upload-artifact@v2
