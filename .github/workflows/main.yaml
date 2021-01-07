@@ -38,7 +38,14 @@ jobs:
         uses: svenstaro/upx-action@v2
         with:
           file: furbnicator
-      - name: Upload assets
+      - name: Upload windows assets
+        if: startsWith(matrix.os, 'windows')
+        uses: actions/upload-artifact@v2
+        with:
+          name: furbnicator_${{ matrix.os }}.exe
+          path: furbnicator*
+      - name: Upload other assets
+        if: ${{ !startsWith(matrix.os, 'windows') }}
         uses: actions/upload-artifact@v2
         with:
           name: furbnicator_${{ matrix.os }}
