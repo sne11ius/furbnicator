@@ -34,10 +34,6 @@ func (a ActivationModule) IsModuleActive(module Module) bool {
 	return a.moduleActivations[module.Name()]
 }
 
-func (a ActivationModule) NeedsExternalData() bool {
-	return false
-}
-
 func (a ActivationModule) UpdateSettings() {
 	for i := range modules {
 		module := modules[i]
@@ -49,4 +45,12 @@ func (a ActivationModule) UpdateSettings() {
 			a.moduleActivations[module.Name()] = viper.GetBool(configKey)
 		}
 	}
+}
+
+func (a ActivationModule) NeedsExternalData() bool {
+	return false
+}
+
+func (a ActivationModule) UpdateExternalData() {
+	// this intentionally empty
 }

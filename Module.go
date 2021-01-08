@@ -5,6 +5,7 @@ type Module interface {
 	Description() string
 
 	CanBeDisabled() bool
-	NeedsExternalData() bool
 	UpdateSettings()
+	NeedsExternalData() bool
+	UpdateExternalData()
 }

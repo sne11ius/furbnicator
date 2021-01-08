@@ -79,6 +79,7 @@ func updateAllModuleData() {
 	for _, module := range modules {
 		if module.NeedsExternalData() {
 			fmt.Printf("Updating %s\n", module.Name())
+			module.UpdateExternalData()
 		}
 	}
 }

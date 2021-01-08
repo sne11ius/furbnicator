@@ -28,10 +28,6 @@ func (b BitbucketModule) CanBeDisabled() bool {
 	return true
 }
 
-func (b BitbucketModule) NeedsExternalData() bool {
-	return true
-}
-
 func (b BitbucketModule) UpdateSettings() {
 	configKey := b.Name() + ".git-url"
 	if !viper.IsSet(configKey) {
@@ -56,4 +52,12 @@ func (b BitbucketModule) UpdateSettings() {
 		log.Fatalf("Missing configuration key `%s` (eg. 'mypassword')", configKey)
 	}
 	b.password = viper.GetString(configKey)
+}
+
+func (b BitbucketModule) NeedsExternalData() bool {
+	return true
+}
+
+func (b BitbucketModule) UpdateExternalData() {
+	panic("implement me")
 }

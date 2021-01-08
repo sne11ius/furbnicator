@@ -27,10 +27,6 @@ func (j JenkinsModule) CanBeDisabled() bool {
 	return true
 }
 
-func (j JenkinsModule) NeedsExternalData() bool {
-	return true
-}
-
 func (j JenkinsModule) UpdateSettings() {
 	configKey := j.Name() + ".http-url"
 	if !viper.IsSet(configKey) {
@@ -49,4 +45,12 @@ func (j JenkinsModule) UpdateSettings() {
 		log.Fatalf("Missing configuration key `%s` (eg. 'mytoken')", configKey)
 	}
 	j.token = viper.GetString(configKey)
+}
+
+func (j JenkinsModule) NeedsExternalData() bool {
+	return true
+}
+
+func (j JenkinsModule) UpdateExternalData() {
+	panic("implement me")
 }
