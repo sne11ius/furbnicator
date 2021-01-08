@@ -1,10 +1,8 @@
 package main
 
 import (
-	"bufio"
-	"fmt"
 	"github.com/spf13/viper"
-	"os"
+	"log"
 )
 
 type ActivationModule struct {
@@ -36,32 +34,17 @@ func (a ActivationModule) IsModuleActive(module Module) bool {
 	return a.moduleActivations[module.Name()]
 }
 
+func (a ActivationModule) NeedsExternalData() bool {
+	return false
+}
+
 func (a ActivationModule) UpdateSettings() {
 	for i := range modules {
 		module := modules[i]
 		if module.CanBeDisabled() {
-			configKey := module.Name()
+			configKey := a.Name() + "." + module.Name()
 			if !viper.IsSet(configKey) {
-				// fmt.Printf("Activation not configured for %s\n", module.Name())
-				fmt.Printf("Activate module %s (Y/n)? ", module.Name())
-				scanner := bufio.NewScanner(os.Stdin)
-				scanner.Scan()
-				configInput := scanner.Text()
-				isActive := false
-				switch {
-				case configInput == "":
-					fallthrough
-				case configInput == "Y":
-					fallthrough
-				case configInput == "y":
-					fallthrough
-				case configInput == "yes":
-					fallthrough
-				case configInput == "true":
-					isActive = true
-				}
-				viper.Set(configKey, isActive)
-				// fmt.Printf("Module %s activated: %t\n", module.Name(), isActive)
+				log.Fatalf("Missing configuration key `%s` (true|false)", configKey)
 			}
 			a.moduleActivations[module.Name()] = viper.GetBool(configKey)
 		}

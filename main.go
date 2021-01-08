@@ -57,44 +57,28 @@ func updateModuleSettings() {
 	// fmt.Printf("Home dir: %s\n", home)
 	configDir := filepath.Join(home, ".config", "furbnicator")
 	// fmt.Printf("Config dir: %s\n", configDir)
-	viper.SetConfigName("config")
+	viper.SetConfigName("furbnicator")
 	viper.SetConfigType("yaml")
+	viper.AddConfigPath(".")
 	viper.AddConfigPath(configDir)
 	viper.AutomaticEnv()
 	if err := viper.ReadInConfig(); err != nil {
-		fullConfigName := filepath.Join(configDir, "config.yaml")
-		fmt.Printf("No config found at %s\n", fullConfigName)
+		fullConfigName := filepath.Join(configDir, "furbnicator.yaml")
+		localConfigName := "./furbnicator.yaml"
+		log.Fatalf("No config found at %s or %s\n", localConfigName, fullConfigName)
 	}
 	for i := range modules {
 		module := modules[i]
 		if activationModule.IsModuleActive(module) {
 			module.UpdateSettings()
-		} else {
-			fmt.Printf("Module not active: %s\n", module.Name())
 		}
 	}
-	/*
-		err = os.MkdirAll(configDir, os.ModePerm)
-		if err != nil {
-			log.Fatalf("Cannot create config dir %s\n", configDir)
-		}
-		configFile := filepath.Join(configDir, "config.txt")
-		if _, err := os.Stat(configFile); err != nil {
-			file, err := os.Create(configFile)
-			if err != nil {
-				log.Fatalf("Cannot create config file %s", configFile)
-			}
-			settings = readSettings(file)
-			defer file.Close()
-		}
-			for i := range modules {
-				module := modules[i]
-			}
-	*/
 }
 
 func updateAllModuleData() {
 	for _, module := range modules {
-		fmt.Printf("Updating %s\n", module.Name())
+		if module.NeedsExternalData() {
+			fmt.Printf("Updating %s\n", module.Name())
+		}
 	}
 }
