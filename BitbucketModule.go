@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/spf13/viper"
 	"log"
+	"os"
 )
 
 type BitbucketModule struct {
@@ -16,19 +17,19 @@ func NewBitbucketModule() *BitbucketModule {
 	return new(BitbucketModule)
 }
 
-func (b BitbucketModule) Name() string {
+func (b *BitbucketModule) Name() string {
 	return "Bitbucket"
 }
 
-func (b BitbucketModule) Description() string {
+func (b *BitbucketModule) Description() string {
 	return "Provides access to bitbucket projects"
 }
 
-func (b BitbucketModule) CanBeDisabled() bool {
+func (b *BitbucketModule) CanBeDisabled() bool {
 	return true
 }
 
-func (b BitbucketModule) UpdateSettings() {
+func (b *BitbucketModule) UpdateSettings() {
 	configKey := b.Name() + ".git-url"
 	if !viper.IsSet(configKey) {
 		log.Fatalf("Missing configuration key `%s` (eg. 'atlassian.example.com:7998')", configKey)
@@ -54,10 +55,14 @@ func (b BitbucketModule) UpdateSettings() {
 	b.password = viper.GetString(configKey)
 }
 
-func (b BitbucketModule) NeedsExternalData() bool {
+func (b *BitbucketModule) NeedsExternalData() bool {
 	return true
 }
 
-func (b BitbucketModule) UpdateExternalData() {
+func (b *BitbucketModule) UpdateExternalData() {
+	panic("implement me")
+}
+
+func (b *BitbucketModule) WriteExternalData(file *os.File) {
 	panic("implement me")
 }

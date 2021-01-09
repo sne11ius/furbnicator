@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/spf13/viper"
 	"log"
+	"os"
 )
 
 type ActivationModule struct {
@@ -15,26 +16,26 @@ func NewActivationModule() *ActivationModule {
 	return a
 }
 
-func (a ActivationModule) Name() string {
+func (a *ActivationModule) Name() string {
 	return "Activation"
 }
 
-func (a ActivationModule) Description() string {
+func (a *ActivationModule) Description() string {
 	return "(De-)activates optional modules"
 }
 
-func (a ActivationModule) CanBeDisabled() bool {
+func (a *ActivationModule) CanBeDisabled() bool {
 	return false
 }
 
-func (a ActivationModule) IsModuleActive(module Module) bool {
+func (a *ActivationModule) IsModuleActive(module Module) bool {
 	if !module.CanBeDisabled() {
 		return true
 	}
 	return a.moduleActivations[module.Name()]
 }
 
-func (a ActivationModule) UpdateSettings() {
+func (a *ActivationModule) UpdateSettings() {
 	for i := range modules {
 		module := modules[i]
 		if module.CanBeDisabled() {
@@ -47,10 +48,14 @@ func (a ActivationModule) UpdateSettings() {
 	}
 }
 
-func (a ActivationModule) NeedsExternalData() bool {
+func (a *ActivationModule) NeedsExternalData() bool {
 	return false
 }
 
-func (a ActivationModule) UpdateExternalData() {
+func (a *ActivationModule) UpdateExternalData() {
+	// this intentionally empty
+}
+
+func (a *ActivationModule) WriteExternalData(file *os.File) {
 	// this intentionally empty
 }

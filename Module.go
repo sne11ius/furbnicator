@@ -1,5 +1,9 @@
 package main
 
+import (
+	"os"
+)
+
 type Module interface {
 	Name() string
 	Description() string
@@ -8,4 +12,5 @@ type Module interface {
 	UpdateSettings()
 	NeedsExternalData() bool
 	UpdateExternalData()
+	WriteExternalData(file *os.File)
 }

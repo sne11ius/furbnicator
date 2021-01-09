@@ -1,24 +1,20 @@
 package main
 
-//import (
-//	"github.com/gdamore/tcell/v2"
-//	"github.com/rivo/tview"
-//)
-
 import (
 	"flag"
 	"fmt"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
 	"log"
+	"os"
 	"path/filepath"
 )
 
 var activationModule = NewActivationModule()
 var modules = []Module{
 	activationModule,
-	NewBitbucketModule(),
 	NewJenkinsModule(),
+	NewBitbucketModule(),
 }
 
 func main() {
@@ -80,6 +76,20 @@ func updateAllModuleData() {
 		if module.NeedsExternalData() {
 			fmt.Printf("Updating %s\n", module.Name())
 			module.UpdateExternalData()
+			home, err := homedir.Dir()
+			if err != nil {
+				log.Fatal("Error: cannot home directory")
+			}
+			filenameForModule := filepath.Join(home, ".config", "furbnicator", module.Name()+".json")
+			file, err := os.Create(filenameForModule)
+			if err != nil {
+				log.Fatalf("Cannot open configuration file %s: %s", filenameForModule, err)
+			}
+			module.WriteExternalData(file)
+			err = file.Close()
+			if err != nil {
+				log.Fatalf("Cannot close file %s: %s", filenameForModule, err)
+			}
 		}
 	}
 }
