@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"github.com/sne11ius/bitclient"
 	"github.com/spf13/viper"
 	"log"
 	"os"
@@ -60,7 +62,25 @@ func (b *BitbucketModule) NeedsExternalData() bool {
 }
 
 func (b *BitbucketModule) UpdateExternalData() {
-	panic("implement me")
+	// Der Kollege schneitet den Pfad von unserer URL ab. Er ist wohl kein
+	// /bitbucket-Suffix gewohnt. Werden wir vermutlich in unserem eigenen Fork
+	// korrigieren müssen.
+	client := bitclient.NewBitClient(b.httpUrl, b.username, b.password)
+
+	requestParams := bitclient.PagedRequest{
+		Limit: 10000,
+		Start: 0,
+	}
+	projectsResponse, err := client.GetProjects(requestParams)
+
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	for _, project := range projectsResponse.Values {
+		fmt.Printf("Project : %d - %s\n", project.Id, project.Key)
+	}
 }
 
 func (b *BitbucketModule) WriteExternalData(file *os.File) {
