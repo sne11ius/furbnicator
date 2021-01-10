@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	. "github.com/Medisafe/jenkins-api/jenkins"
 	"github.com/spf13/viper"
 	"log"
@@ -91,6 +92,7 @@ func (j *JenkinsModule) UpdateExternalData() {
 	}()
 	wg.Wait()
 	j.jobs = allJobDetails
+	fmt.Printf("  - Updated %d jobs\n", len(j.jobs))
 }
 
 func (j *JenkinsModule) WriteExternalData(file *os.File) {

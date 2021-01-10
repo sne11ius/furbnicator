@@ -75,6 +75,7 @@ func (b *BitbucketModule) NeedsExternalData() bool {
 func (b *BitbucketModule) UpdateExternalData() {
 	allRepositories := b.LoadRepositories()
 	b.repositoriesWithReadme = b.LoadReadmes(allRepositories)
+	fmt.Printf("  - Updated %d projects\n", len(b.repositoriesWithReadme))
 }
 
 func (b BitbucketModule) LoadRepositories() []bitclient.Repository {
