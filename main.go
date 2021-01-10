@@ -4,12 +4,15 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"github.com/gdamore/tcell/v2"
 	"github.com/mitchellh/go-homedir"
+	"github.com/rivo/tview"
 	"github.com/spf13/viper"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type action interface {
@@ -58,25 +61,49 @@ func main() {
 			return
 		}
 	}
+
+	app := tview.NewApplication()
+	initialText := strings.Join(args, " ")
+	var list *tview.List
+	inputField := tview.NewInputField().
+		SetLabel("furbnicator > ﴪ >>> ").
+		SetFieldWidth(0).
+		SetText(initialText).
+		SetDoneFunc(func(key tcell.Key) {
+			if key == tcell.KeyEsc {
+				app.Stop()
+			}
+		})
+	list = tview.NewList().
+		ShowSecondaryText(false)
 	for _, action := range actions {
-		fmt.Println(action.GetLabel())
+		list.AddItem(action.GetLabel(), "", 0, func() {
+			message := action.Run()
+			fmt.Println(message)
+			os.Exit(0)
+		})
 	}
-
-	// for _, module := range modules {
-	// 	fmt.Printf("%s: %s\n", module.Name(), module.Description())
-	// }
-
-	// app := tview.NewApplication()
-	// inputField := tview.NewInputField().
-	// 	SetLabel("Enter a number: ").
-	// 	SetFieldWidth(10).
-	// 	SetAcceptanceFunc(tview.InputFieldInteger).
-	// 	SetDoneFunc(func(key tcell.Key) {
-	// 		app.Stop()
-	// 	})
-	// if err := app.SetRoot(inputField, true).SetFocus(inputField).Run(); err != nil {
-	//	panic(err)
-	// }
+	var inputHasFocus = true
+	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyTAB {
+			if inputHasFocus {
+				app.SetFocus(list)
+			} else {
+				app.SetFocus(inputField)
+			}
+			inputHasFocus = !inputHasFocus
+			return nil
+		}
+		return event
+	})
+	flex := tview.NewFlex().
+		SetFullScreen(true).
+		SetDirection(tview.FlexRow).
+		AddItem(inputField, 1, 0, true).
+		AddItem(list, 0, 1, false)
+	if err := app.SetRoot(flex, true).SetFocus(inputField).Run(); err != nil {
+		panic(err)
+	}
 }
 
 func readBool() bool {
@@ -103,9 +130,7 @@ func updateModuleSettings() {
 	if err != nil {
 		log.Fatal("Error: cannot home directory")
 	}
-	// fmt.Printf("Home dir: %s\n", home)
 	configDir := filepath.Join(home, ".config", "furbnicator")
-	// fmt.Printf("Config dir: %s\n", configDir)
 	viper.SetConfigName("furbnicator")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")
