@@ -164,6 +164,10 @@ github.com/smartystreets/goconvey v1.6.4 h1:fv0U8FUIMPNf1L9lnHLvLhgicrIVChEkdzIK
 github.com/smartystreets/goconvey v1.6.4/go.mod h1:syvi0/a8iFYH4r/RixwvyeAJjdLS9QV7WQ/tjFTllLA=
 github.com/sne11ius/bitclient v0.0.0-20190425080230-bfee94efac35 h1:bNfQDIp7j+bY2U8EgxCtWeDKWr1w5B8QMvxrAs0LhgA=
 github.com/sne11ius/bitclient v0.0.0-20190425080230-bfee94efac35/go.mod h1:ccdcluaqyfGZxp3JHWD9qC2Sefl+b08J0JvXOxTpRZQ=
+github.com/sne11ius/bitclient v0.0.0-20210110160018-3630b903ae23 h1:o+JXggnZ3Y/Xdk/D3iVL87jg5IAi7/gQCraY63cz6L8=
+github.com/sne11ius/bitclient v0.0.0-20210110160018-3630b903ae23/go.mod h1:ccdcluaqyfGZxp3JHWD9qC2Sefl+b08J0JvXOxTpRZQ=
+github.com/sne11ius/bitclient v0.0.0-20210110195654-62888517afa6 h1:RMplrPSWMPD0U+46/WYzBQ2x6Ugbr2krnYogw6Zvyxs=
+github.com/sne11ius/bitclient v0.0.0-20210110195654-62888517afa6/go.mod h1:ccdcluaqyfGZxp3JHWD9qC2Sefl+b08J0JvXOxTpRZQ=
 github.com/soheilhy/cmux v0.1.4/go.mod h1:IM3LyeVVIOuxMH7sFAkER9+bJ4dT7Ms6E4xg4kGIyLM=
 github.com/spaolacci/murmur3 v0.0.0-20180118202830-f09979ecbc72/go.mod h1:JwIasOWyU6f++ZhiEuf87xNszmSA2myDM2Kzu9HwQUA=
 github.com/spf13/afero v1.1.2 h1:m8/z1t7/fwjysjQRYbP0RD+bUIF/8tJwPdEZsI83ACI=

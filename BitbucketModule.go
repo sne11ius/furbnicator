@@ -1,18 +1,29 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/sne11ius/bitclient"
 	"github.com/spf13/viper"
+	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
+	"strings"
+	"sync"
 )
 
 type BitbucketModule struct {
-	gitUrl   string
-	httpUrl  string
-	username string
-	password string
+	gitUrl                 string
+	httpUrl                string
+	username               string
+	password               string
+	repositoriesWithReadme []RepositoryWithReadme
+}
+
+type RepositoryWithReadme struct {
+	Repository bitclient.Repository `json:"repository"`
+	Readme     string               `json:"readme"`
 }
 
 func NewBitbucketModule() *BitbucketModule {
@@ -62,9 +73,11 @@ func (b *BitbucketModule) NeedsExternalData() bool {
 }
 
 func (b *BitbucketModule) UpdateExternalData() {
-	// Der Kollege schneitet den Pfad von unserer URL ab. Er ist wohl kein
-	// /bitbucket-Suffix gewohnt. Werden wir vermutlich in unserem eigenen Fork
-	// korrigieren müssen.
+	allRepositories := b.LoadRepositories()
+	b.repositoriesWithReadme = b.LoadReadmes(allRepositories)
+}
+
+func (b BitbucketModule) LoadRepositories() []bitclient.Repository {
 	client := bitclient.NewBitClient(b.httpUrl, b.username, b.password)
 
 	requestParams := bitclient.PagedRequest{
@@ -74,15 +87,105 @@ func (b *BitbucketModule) UpdateExternalData() {
 	projectsResponse, err := client.GetProjects(requestParams)
 
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		log.Fatalf("Cannot list projects: %v", err)
 	}
 
-	for _, project := range projectsResponse.Values {
-		fmt.Printf("Project : %d - %s\n", project.Id, project.Key)
+	projects := projectsResponse.Values
+
+	numProjects := len(projects)
+	var wg sync.WaitGroup
+	wg.Add(numProjects)
+	queue := make(chan []bitclient.Repository, 1)
+	for i := 0; i < numProjects; i++ {
+		go func(i int) {
+			project := projects[i]
+			repositories, err := client.GetRepositories(project.Key, bitclient.PagedRequest{
+				Limit: 1000,
+				Start: 0,
+			})
+			if err != nil {
+				log.Fatalf("Cannot get repositories for %s", project.Name)
+			}
+			queue <- repositories.Values
+		}(i)
+	}
+	var allRepositories []bitclient.Repository
+	go func() {
+		for t := range queue {
+			allRepositories = append(allRepositories, t...)
+			wg.Done()
+		}
+	}()
+	wg.Wait()
+	return allRepositories
+}
+
+func (b *BitbucketModule) LoadReadmes(repositories []bitclient.Repository) []RepositoryWithReadme {
+	numRepositories := len(repositories)
+	var wg sync.WaitGroup
+	wg.Add(numRepositories)
+	queue := make(chan RepositoryWithReadme, 1)
+	for i := 0; i < numRepositories; i++ {
+		go func(i int) {
+			repository := repositories[i]
+			readme, err := b.GetReadmeText(repository, "develop")
+			if err != nil {
+				readme, _ = b.GetReadmeText(repository, "master")
+			}
+			queue <- RepositoryWithReadme{
+				Repository: repository,
+				Readme:     readme,
+			}
+		}(i)
+	}
+	var repositoriesWithReadmes []RepositoryWithReadme
+	go func() {
+		for t := range queue {
+			repositoriesWithReadmes = append(repositoriesWithReadmes, t)
+			wg.Done()
+		}
+	}()
+	wg.Wait()
+	return repositoriesWithReadmes
+}
+
+func (b *BitbucketModule) GetReadmeText(repository bitclient.Repository, branch string) (string, error) {
+	var selfLink = repository.Links["self"][0]["href"]
+	var baseLink = strings.TrimSuffix(selfLink, "/browse")
+	var readmeLink = baseLink + "/raw/README.md?at=refs%2Fheads%2F" + branch
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", readmeLink, nil)
+	if err != nil {
+		return "", err
+	}
+	req.SetBasicAuth(b.username, b.password)
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Fatalf("Could not close response body: %v", err)
+		}
+	}()
+	if resp.StatusCode == http.StatusOK {
+		bodyBytes, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return "", err
+		} else {
+			return string(bodyBytes), nil
+		}
+	} else {
+		return "", fmt.Errorf("could not get README. Status: %v", resp.StatusCode)
 	}
 }
 
 func (b *BitbucketModule) WriteExternalData(file *os.File) {
-	panic("implement me")
+	bytes, err := json.Marshal(b.repositoriesWithReadme)
+	if err != nil {
+		log.Fatalf("Cannot serialize repository data: %s", err)
+	}
+	if _, err = file.Write(bytes); err != nil {
+		log.Fatalf("Cannot write repository data to %v: %s", file, err)
+	}
 }

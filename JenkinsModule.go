@@ -66,13 +66,13 @@ func (j *JenkinsModule) UpdateExternalData() {
 	if err != nil {
 		log.Fatalf("Cannot list Jenkins Jobs: %s", err)
 	}
-	sliceLength := len(jobs)
+	numJobs := len(jobs)
 
 	// From https://stackoverflow.com/a/39065381
 	var wg sync.WaitGroup
-	wg.Add(sliceLength)
+	wg.Add(numJobs)
 	queue := make(chan Job, 1)
-	for i := 0; i < sliceLength; i++ {
+	for i := 0; i < numJobs; i++ {
 		go func(i int) {
 			job := jobs[i]
 			details, err := jenkinsApi.GetJob(job.Name)
@@ -96,9 +96,9 @@ func (j *JenkinsModule) UpdateExternalData() {
 func (j *JenkinsModule) WriteExternalData(file *os.File) {
 	bytes, err := json.Marshal(j.jobs)
 	if err != nil {
-		log.Fatalf("Cannot serialize Job data: %s", err)
+		log.Fatalf("Cannot serialize job data: %s", err)
 	}
 	if _, err = file.Write(bytes); err != nil {
-		log.Fatalf("Cannot Write Job data to %v: %s", file, err)
+		log.Fatalf("Cannot write job data to %v: %s", file, err)
 	}
 }
