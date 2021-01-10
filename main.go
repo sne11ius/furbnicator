@@ -1,14 +1,21 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 )
+
+type action interface {
+	GetLabel() string
+	Run() string
+}
 
 var activationModule = NewActivationModule()
 var modules = []Module{
@@ -17,15 +24,42 @@ var modules = []Module{
 	NewBitbucketModule(),
 }
 
+var activeModules []Module
+
 func main() {
+	updateModuleSettings()
+	for _, module := range modules {
+		if activationModule.IsModuleActive(module) {
+			activeModules = append(activeModules, module)
+		}
+	}
+
 	doUpdate := flag.Bool("u", false, "Update data and exit. Consider running with this option as cron task")
 	flag.Parse()
 
-	updateModuleSettings()
-
 	if *doUpdate == true {
-		updateAllModuleData()
+		updateDataForActiveModules()
 		return
+	} else {
+		readCacheDataForActiveModules()
+	}
+
+	args := os.Args[1:]
+	var actions []action
+	for _, module := range activeModules {
+		actions = append(actions, module.CreateActions(args)...)
+	}
+	if len(actions) == 1 {
+		action := actions[0]
+		fmt.Printf("Run %s? (Y/n) ", action.GetLabel())
+		if readBool() {
+			message := action.Run()
+			fmt.Println(message)
+			return
+		}
+	}
+	for _, action := range actions {
+		fmt.Println(action.GetLabel())
 	}
 
 	// for _, module := range modules {
@@ -43,6 +77,25 @@ func main() {
 	// if err := app.SetRoot(inputField, true).SetFocus(inputField).Run(); err != nil {
 	//	panic(err)
 	// }
+}
+
+func readBool() bool {
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Scan()
+	input := scanner.Text()
+	switch {
+	case input == "":
+		fallthrough
+	case input == "Y":
+		fallthrough
+	case input == "y":
+		fallthrough
+	case input == "yes":
+		fallthrough
+	case input == "true":
+		return true
+	}
+	return false
 }
 
 func updateModuleSettings() {
@@ -71,16 +124,12 @@ func updateModuleSettings() {
 	}
 }
 
-func updateAllModuleData() {
-	for _, module := range modules {
+func updateDataForActiveModules() {
+	for _, module := range activeModules {
 		if module.NeedsExternalData() {
 			fmt.Printf("Updating %s\n", module.Name())
 			module.UpdateExternalData()
-			home, err := homedir.Dir()
-			if err != nil {
-				log.Fatal("Error: cannot home directory")
-			}
-			filenameForModule := filepath.Join(home, ".config", "furbnicator", module.Name()+".json")
+			filenameForModule := LocateConfigFile(module)
 			file, err := os.Create(filenameForModule)
 			if err != nil {
 				log.Fatalf("Cannot open configuration file %s: %s", filenameForModule, err)
@@ -92,4 +141,25 @@ func updateAllModuleData() {
 			}
 		}
 	}
+}
+
+func readCacheDataForActiveModules() {
+	for _, module := range activeModules {
+		if module.NeedsExternalData() {
+			filenameForModule := LocateConfigFile(module)
+			data, err := ioutil.ReadFile(filenameForModule)
+			if err != nil {
+				log.Fatalf("Cannot read configuration from %s. Consider running with `-u` parameter first.", filenameForModule)
+			}
+			module.ReadExternalData(data)
+		}
+	}
+}
+
+func LocateConfigFile(module Module) string {
+	home, err := homedir.Dir()
+	if err != nil {
+		log.Fatal("Error: cannot home directory")
+	}
+	return filepath.Join(home, ".config", "furbnicator", module.Name()+".json")
 }

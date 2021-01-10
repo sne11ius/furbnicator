@@ -104,3 +104,14 @@ func (j *JenkinsModule) WriteExternalData(file *os.File) {
 		log.Fatalf("Cannot write job data to %v: %s", file, err)
 	}
 }
+
+func (j *JenkinsModule) ReadExternalData(data []byte) {
+	err := json.Unmarshal(data, &j.jobs)
+	if err != nil {
+		log.Fatalf("Cannot read jenins job cache. Consider running with `-u` parameter.")
+	}
+}
+
+func (j *JenkinsModule) CreateActions(tags []string) []action {
+	return []action{}
+}

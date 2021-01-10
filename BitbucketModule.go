@@ -190,3 +190,30 @@ func (b *BitbucketModule) WriteExternalData(file *os.File) {
 		log.Fatalf("Cannot write repository data to %v: %s", file, err)
 	}
 }
+
+func (b *BitbucketModule) ReadExternalData(data []byte) {
+	err := json.Unmarshal(data, &b.repositoriesWithReadme)
+	if err != nil {
+		log.Fatalf("Cannot read bitbucket project cache. Consider running with `-u` parameter.")
+	}
+}
+
+type BitbucketBrowseAction struct {
+	repo RepositoryWithReadme
+}
+
+func (b BitbucketBrowseAction) GetLabel() string {
+	return "[bitbucket] BROWSE " + b.repo.Repository.Name
+}
+
+func (b BitbucketBrowseAction) Run() string {
+	return "Wow, such browser"
+}
+
+func (b *BitbucketModule) CreateActions(tags []string) []action {
+	var actions []action
+	for _, repo := range b.repositoriesWithReadme {
+		actions = append(actions, BitbucketBrowseAction{repo: repo})
+	}
+	return actions
+}

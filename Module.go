@@ -13,4 +13,6 @@ type Module interface {
 	NeedsExternalData() bool
 	UpdateExternalData()
 	WriteExternalData(file *os.File)
+	CreateActions(tags []string) []action
+	ReadExternalData(data []byte)
 }

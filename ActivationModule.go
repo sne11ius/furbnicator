@@ -56,6 +56,14 @@ func (a *ActivationModule) UpdateExternalData() {
 	// this intentionally empty
 }
 
-func (a *ActivationModule) WriteExternalData(file *os.File) {
+func (a *ActivationModule) WriteExternalData(_ *os.File) {
 	// this intentionally empty
+}
+
+func (a *ActivationModule) ReadExternalData(_ []byte) {
+	// this intentionally empty
+}
+
+func (a *ActivationModule) CreateActions(_ []string) []action {
+	return []action{}
 }
