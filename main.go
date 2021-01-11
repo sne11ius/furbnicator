@@ -64,17 +64,7 @@ func main() {
 
 	app := tview.NewApplication()
 	initialText := strings.Join(args, " ")
-	var list *tview.List
-	inputField := tview.NewInputField().
-		SetLabel("furbnicator > ﴪ >>> ").
-		SetFieldWidth(0).
-		SetText(initialText).
-		SetDoneFunc(func(key tcell.Key) {
-			if key == tcell.KeyEsc {
-				app.Stop()
-			}
-		})
-	list = tview.NewList().
+	list := tview.NewList().
 		ShowSecondaryText(false)
 	for _, action := range actions {
 		list.AddItem(action.GetLabel(), "", 0, func() {
@@ -83,6 +73,30 @@ func main() {
 			os.Exit(0)
 		})
 	}
+	inputField := tview.NewInputField().
+		SetLabel("furbnicator > ﴪ >>> ").
+		SetFieldWidth(0).
+		SetText(initialText).
+		SetChangedFunc(func(text string) {
+			searchArgs := strings.Split(text, " ")
+			var filteredActions []action
+			for _, module := range activeModules {
+				filteredActions = append(filteredActions, module.CreateActions(searchArgs)...)
+			}
+			list.Clear()
+			for _, action := range filteredActions {
+				list.AddItem(action.GetLabel(), "", 0, func() {
+					message := action.Run()
+					fmt.Println(message)
+					os.Exit(0)
+				})
+			}
+		}).
+		SetDoneFunc(func(key tcell.Key) {
+			if key == tcell.KeyEsc {
+				app.Stop()
+			}
+		})
 	var inputHasFocus = true
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyTAB {

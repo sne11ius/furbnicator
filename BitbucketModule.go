@@ -207,13 +207,24 @@ func (b BitbucketBrowseAction) GetLabel() string {
 }
 
 func (b BitbucketBrowseAction) Run() string {
-	return "Wow, such browser"
+	url := b.repo.Repository.Links["self"][0]["href"]
+	if err := LaunchUrl(url); err != nil {
+		log.Fatalf("Could not browse %s: %v", url, err)
+	}
+	return "Opened " + url
 }
 
 func (b *BitbucketModule) CreateActions(tags []string) []action {
 	var actions []action
 	for _, repo := range b.repositoriesWithReadme {
-		actions = append(actions, BitbucketBrowseAction{repo: repo})
+		for _, tag := range tags {
+			if ContainsCaseInsensitive(repo.Repository.Name, tag) ||
+				ContainsCaseInsensitive(repo.Readme, tag) ||
+				ContainsCaseInsensitive(repo.Repository.Project.Name, tag) {
+				actions = append(actions, BitbucketBrowseAction{repo: repo})
+				break
+			}
+		}
 	}
 	return actions
 }
