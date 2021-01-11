@@ -47,8 +47,8 @@ func main() {
 		readCacheDataForActiveModules()
 	}
 
-	args := os.Args[1:]
-	tags := TagsFromStrings(args)
+	params := os.Args[1:]
+	tags := TagsFromStrings(params)
 	var actions []action
 	for _, module := range activeModules {
 		actions = append(actions, module.CreateActions(tags)...)
@@ -64,16 +64,20 @@ func main() {
 	}
 
 	app := tview.NewApplication()
-	initialText := strings.Join(args, " ")
+	initialText := strings.Join(params, " ")
 	list := tview.NewList().
 		ShowSecondaryText(false).
-		SetSelectedTextColor(tcell.ColorBlack)
-	for _, action := range actions {
-		list.AddItem(action.GetLabel(), "", 0, func() {
+		SetWrapAround(false).
+		SetSelectedTextColor(tcell.ColorBlack).
+		SetSelectedFunc(func(index int, _ string, _ string, _ rune) {
+			app.Stop()
+			action := actions[index]
 			message := action.Run()
-			fmt.Println(message)
+			fmt.Println("ﴪ >>> " + message)
 			os.Exit(0)
 		})
+	for _, action := range actions {
+		list.AddItem(action.GetLabel(), "", 0, nil)
 	}
 	inputField := tview.NewInputField().
 		SetLabel("furbnicator > ﴪ >>> ").
@@ -82,18 +86,13 @@ func main() {
 		SetChangedFunc(func(text string) {
 			searchArgs := strings.Split(text, " ")
 			tags := TagsFromStrings(searchArgs)
-			var filteredActions []action
+			actions = []action{}
 			for _, module := range activeModules {
-				filteredActions = append(filteredActions, module.CreateActions(tags)...)
+				actions = append(actions, module.CreateActions(tags)...)
 			}
 			list.Clear()
-			for _, action := range filteredActions {
-				list.AddItem(action.GetLabel(), "", 0, func() {
-					app.Stop()
-					message := action.Run()
-					fmt.Println(message)
-					os.Exit(0)
-				})
+			for _, action := range actions {
+				list.AddItem(action.GetLabel(), "", 0, nil)
 			}
 		}).
 		SetDoneFunc(func(key tcell.Key) {
