@@ -48,9 +48,10 @@ func main() {
 	}
 
 	args := os.Args[1:]
+	tags := TagsFromStrings(args)
 	var actions []action
 	for _, module := range activeModules {
-		actions = append(actions, module.CreateActions(args)...)
+		actions = append(actions, module.CreateActions(tags)...)
 	}
 	if len(actions) == 1 {
 		action := actions[0]
@@ -65,7 +66,8 @@ func main() {
 	app := tview.NewApplication()
 	initialText := strings.Join(args, " ")
 	list := tview.NewList().
-		ShowSecondaryText(false)
+		ShowSecondaryText(false).
+		SetSelectedTextColor(tcell.ColorBlack)
 	for _, action := range actions {
 		list.AddItem(action.GetLabel(), "", 0, func() {
 			message := action.Run()
@@ -79,13 +81,15 @@ func main() {
 		SetText(initialText).
 		SetChangedFunc(func(text string) {
 			searchArgs := strings.Split(text, " ")
+			tags := TagsFromStrings(searchArgs)
 			var filteredActions []action
 			for _, module := range activeModules {
-				filteredActions = append(filteredActions, module.CreateActions(searchArgs)...)
+				filteredActions = append(filteredActions, module.CreateActions(tags)...)
 			}
 			list.Clear()
 			for _, action := range filteredActions {
 				list.AddItem(action.GetLabel(), "", 0, func() {
+					app.Stop()
 					message := action.Run()
 					fmt.Println(message)
 					os.Exit(0)

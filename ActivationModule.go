@@ -64,6 +64,6 @@ func (a *ActivationModule) ReadExternalData(_ []byte) {
 	// this intentionally empty
 }
 
-func (a *ActivationModule) CreateActions(_ []string) []action {
+func (a *ActivationModule) CreateActions(_ []Tag) []action {
 	return []action{}
 }

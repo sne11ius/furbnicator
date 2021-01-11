@@ -112,6 +112,6 @@ func (j *JenkinsModule) ReadExternalData(data []byte) {
 	}
 }
 
-func (j *JenkinsModule) CreateActions(tags []string) []action {
+func (j *JenkinsModule) CreateActions(_ []Tag) []action {
 	return []action{}
 }

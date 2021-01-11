@@ -214,16 +214,32 @@ func (b BitbucketBrowseAction) Run() string {
 	return "Opened " + url
 }
 
-func (b *BitbucketModule) CreateActions(tags []string) []action {
+type BitbucketCloneAction struct {
+	repo RepositoryWithReadme
+}
+
+func (b BitbucketCloneAction) GetLabel() string {
+	return "[bitbucket] CLONE " + b.repo.Repository.Name
+}
+
+func (b BitbucketCloneAction) Run() string {
+	cloneUrl := b.repo.Repository.Links["clone"][0]["href"]
+	if err := CloneUrl(cloneUrl); err != nil {
+		log.Fatalf("Could not clone %s: %v", cloneUrl, err)
+	}
+	return "Cloned " + cloneUrl
+}
+
+func (b *BitbucketModule) CreateActions(tags []Tag) []action {
 	var actions []action
 	for _, repo := range b.repositoriesWithReadme {
-		for _, tag := range tags {
-			if ContainsCaseInsensitive(repo.Repository.Name, tag) ||
-				ContainsCaseInsensitive(repo.Readme, tag) ||
-				ContainsCaseInsensitive(repo.Repository.Project.Name, tag) {
-				actions = append(actions, BitbucketBrowseAction{repo: repo})
-				break
-			}
+		strs := []string{"bitbucket", "browse", repo.Repository.Name, repo.Readme, repo.Repository.Project.Name}
+		if DoMatch(strs, tags) {
+			actions = append(actions, BitbucketBrowseAction{repo: repo})
+		}
+		strs = []string{"bitbucket", "clone", repo.Repository.Name, repo.Readme, repo.Repository.Project.Name}
+		if DoMatch(strs, tags) {
+			actions = append(actions, BitbucketCloneAction{repo: repo})
 		}
 	}
 	return actions
