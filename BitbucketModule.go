@@ -223,7 +223,18 @@ func (b BitbucketCloneAction) GetLabel() string {
 }
 
 func (b BitbucketCloneAction) Run() string {
-	cloneUrl := b.repo.Repository.Links["clone"][0]["href"]
+	var cloneUrl string
+	found := false
+	for _, link := range b.repo.Repository.Links["clone"] {
+		if strings.HasPrefix(link["href"], "ssh://") {
+			cloneUrl = link["href"]
+			found = true
+			break
+		}
+	}
+	if !found {
+		cloneUrl = b.repo.Repository.Links["clone"][0]["href"]
+	}
 	if err := CloneUrl(cloneUrl); err != nil {
 		log.Fatalf("Could not clone %s: %v", cloneUrl, err)
 	}
