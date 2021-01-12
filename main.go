@@ -101,6 +101,22 @@ func main() {
 				app.Stop()
 			}
 		})
+	inputField.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyDown && list.GetItemCount() != 0 {
+			app.SetFocus(list)
+			return nil
+		} else {
+			return event
+		}
+	})
+	list.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyUp && list.GetCurrentItem() == 0 {
+			app.SetFocus(inputField)
+			return nil
+		} else {
+			return event
+		}
+	})
 	var inputHasFocus = true
 	app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyTAB {
