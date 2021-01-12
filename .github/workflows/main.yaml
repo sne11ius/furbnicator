@@ -1,6 +1,36 @@
 on: [push]
 name: Release
 jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    if: contains(github.ref, 'v')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: |
+            Changes in this Release
+            - First Change
+            - Second Change
+          draft: false
+          prerelease: false
+      - name: 'Write Upload URL To File'
+        run: |
+          echo "${{steps.create_release.outputs.upload_url}}" > upload_url.txt
+      - name: 'Publish Upload URL'
+        uses: actions/upload-artifact@v2-preview
+        with:
+          name: 'upload_url.txt'
+          path: 'upload_url.txt'
+
   release:
     strategy:
       matrix:
@@ -50,3 +80,38 @@ jobs:
         with:
           name: furbnicator_${{ matrix.os }}
           path: furbnicator*
+
+      - name: 'Download Release URL'
+        if: contains(github.ref, 'v')
+        uses: actions/download-artifact@v2-preview
+        with:
+          name: 'upload_url.txt'
+
+      - name: 'Set Upload URL Env Var'
+        if: contains(github.ref, 'v')
+        run: |
+          echo "UPLOAD_URL=$(cat upload_url.txt)" >> $GITHUB_ENV
+
+      - name: 'Upload Windows Release Asset'
+        if: contains(github.ref, 'v') && startsWith(matrix.os, 'windows')
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        with:
+          upload_url: ${{steps.create_release.outputs.upload_url}}
+          asset_path: fu_${{ matrix.os }}.exe
+          asset_name: furbnicator.exe
+          asset_content_type: application/octet-stream
+
+      - name: Upload other release assets
+        if: contains(github.ref, 'v') && ${{ !startsWith(matrix.os, 'windows') }}
+          uses: actions/upload-release-asset@v1
+          env:
+            GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+          with:
+            upload_url: ${{steps.create_release.outputs.upload_url}}
+        with:
+          name: furbnicator_${{ matrix.os }}
+            asset_path: fu_${{ matrix.os }}
+            asset_name: furbnicator
+            asset_content_type: application/octet-stream
