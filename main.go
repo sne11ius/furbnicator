@@ -25,6 +25,7 @@ var modules = []Module{
 	activationModule,
 	NewJenkinsModule(),
 	NewBitbucketModule(),
+	NewTimestampModule(),
 }
 
 var activeModules []Module

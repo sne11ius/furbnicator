@@ -30,6 +30,10 @@ The jenkins meodule can index the jobs in a single jenkins installation.
 - Run a job
 - Browse a job
 
+### Timestamps
+
+Displays the current unix or java timestamp.
+
 ## Demo run
 
 tbd.
