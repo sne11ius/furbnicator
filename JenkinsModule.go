@@ -6,6 +6,7 @@ import (
 	. "github.com/Medisafe/jenkins-api/jenkins"
 	"github.com/spf13/viper"
 	"log"
+	"net/http"
 	"os"
 	"sync"
 )
@@ -112,6 +113,70 @@ func (j *JenkinsModule) ReadExternalData(data []byte) {
 	}
 }
 
-func (j *JenkinsModule) CreateActions(_ []Tag) []action {
-	return []action{}
+type JenkinsBrowseAction struct {
+	job Job
+}
+
+func (j JenkinsBrowseAction) GetLabel() string {
+	return "[jenkins] BROWSE " + j.job.Name
+}
+
+func (j JenkinsBrowseAction) Run() string {
+	url := j.job.Url
+	if err := LaunchUrl(url); err != nil {
+		log.Fatalf("Could not browse %s: %v", url, err)
+	}
+	return "Opened " + url
+}
+
+type JenkinsRunJobAction struct {
+	job      Job
+	username string
+	token    string
+}
+
+func (j JenkinsRunJobAction) GetLabel() string {
+	return "[jenkins] RUN " + j.job.Name
+}
+
+func (j JenkinsRunJobAction) Run() string {
+	url := j.job.Url + "/build"
+	client := &http.Client{}
+	req, err := http.NewRequest("POST", url, nil)
+	if err != nil {
+		log.Fatalf("Could not create request to start job %s: %v", j.job.Name, err)
+	}
+	req.SetBasicAuth(j.username, j.token)
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatalf("Could not start job %s: %v", j.job.Name, err)
+	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Fatalf("Could not close response body: %v", err)
+		}
+	}()
+	if resp.StatusCode != http.StatusCreated {
+		log.Fatalf("Could not start job %s (HTTP %v): %v", j.job.Name, resp.StatusCode, err)
+	}
+	return "Started job " + j.job.Name
+}
+
+func (j *JenkinsModule) CreateActions(tags []Tag) []action {
+	var actions []action
+	for _, job := range j.jobs {
+		strs := []string{"jenkins", "browse", job.Name, job.Description}
+		if DoMatch(strs, tags) {
+			actions = append(actions, JenkinsBrowseAction{job: job})
+		}
+		strs = []string{"jenkins", "run", job.Name, job.Description}
+		if DoMatch(strs, tags) {
+			actions = append(actions, JenkinsRunJobAction{
+				job:      job,
+				username: j.username,
+				token:    j.token,
+			})
+		}
+	}
+	return actions
 }
