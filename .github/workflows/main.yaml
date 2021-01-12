@@ -97,17 +97,28 @@ jobs:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
         with:
           upload_url: ${{env.UPLOAD_URL}}
-          asset_path: fu.exe
-          asset_name: furbnicator.exe
+          asset_path: furbnicator.exe
+          asset_name: fu.exe
           asset_content_type: application/octet-stream
 
-      - name: 'Upload other release assets'
-        if: contains(github.ref, 'v') && ${{ !startsWith(matrix.os, 'windows') }}
+      - name: 'Upload linux release assets'
+        if: contains(github.ref, 'v') && startsWith(matrix.os, 'ubuntu')
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
         with:
           upload_url: ${{ env.UPLOAD_URL }}
           asset_path: furbnicator
-          asset_name: fu_${{ matrix.os }}
+          asset_name: fu
+          asset_content_type: application/octet-stream
+
+      - name: 'Upload macos release assets'
+        if: contains(github.ref, 'v') && startsWith(matrix.os, 'macos')
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        with:
+          upload_url: ${{ env.UPLOAD_URL }}
+          asset_path: furbnicator
+          asset_name: fu_mac
           asset_content_type: application/octet-stream
