@@ -14,7 +14,6 @@ import (
 )
 
 type BitbucketModule struct {
-	gitUrl                 string
 	httpUrl                string
 	username               string
 	password               string
@@ -43,13 +42,7 @@ func (b *BitbucketModule) CanBeDisabled() bool {
 }
 
 func (b *BitbucketModule) UpdateSettings() {
-	configKey := b.Name() + ".git-url"
-	if !viper.IsSet(configKey) {
-		log.Fatalf("Missing configuration key `%s` (eg. 'atlassian.example.com:7998')", configKey)
-	}
-	b.gitUrl = viper.GetString(configKey)
-
-	configKey = b.Name() + ".http-url"
+	configKey := b.Name() + ".http-url"
 	if !viper.IsSet(configKey) {
 		log.Fatalf("Missing configuration key `%s` (eg. 'https://atlassian.example.com/bitbucket')", configKey)
 	}
