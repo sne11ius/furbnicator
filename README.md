@@ -38,6 +38,10 @@ Displays the current unix or java timestamp.
 
 tbd.
 
+## Configuration
+
+tbd.
+
 ## Todo
 
 ### RobinModule
