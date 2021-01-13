@@ -208,7 +208,7 @@ func (b BitbucketBrowseAction) GetLabel() string {
 
 func (b BitbucketBrowseAction) Run() string {
 	url := b.repo.Repository.Links["self"][0]["href"]
-	if err := LaunchUrl(url); err != nil {
+	if err := launchUrl(url); err != nil {
 		log.Fatalf("Could not browse %s: %v", url, err)
 	}
 	return "Opened " + url
@@ -235,7 +235,7 @@ func (b BitbucketCloneAction) Run() string {
 	if !found {
 		cloneUrl = b.repo.Repository.Links["clone"][0]["href"]
 	}
-	if err := CloneUrl(cloneUrl); err != nil {
+	if err := runGitClone(cloneUrl); err != nil {
 		log.Fatalf("Could not clone %s: %v", cloneUrl, err)
 	}
 	return "Cloned " + cloneUrl

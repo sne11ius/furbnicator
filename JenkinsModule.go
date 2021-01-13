@@ -123,7 +123,7 @@ func (j JenkinsBrowseAction) GetLabel() string {
 
 func (j JenkinsBrowseAction) Run() string {
 	url := j.job.Url
-	if err := LaunchUrl(url); err != nil {
+	if err := launchUrl(url); err != nil {
 		log.Fatalf("Could not browse %s: %v", url, err)
 	}
 	return "Opened " + url

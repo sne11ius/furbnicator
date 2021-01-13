@@ -7,7 +7,7 @@ import (
 )
 
 // From https://stackoverflow.com/a/39324149
-func LaunchUrl(url string) error {
+func launchUrl(url string) error {
 	var cmd string
 	var args []string
 
@@ -25,7 +25,7 @@ func LaunchUrl(url string) error {
 }
 
 // From https://stackoverflow.com/a/39324149
-func CloneUrl(url string) error {
+func runGitClone(url string) error {
 	var cmd string
 	var args []string
 
@@ -43,4 +43,16 @@ func CloneUrl(url string) error {
 	proc.Stdout = os.Stdout
 	proc.Stderr = os.Stderr
 	return proc.Run()
+}
+
+func remove(items []string, item string) []string {
+	var newitems []string
+
+	for _, i := range items {
+		if i != item {
+			newitems = append(newitems, i)
+		}
+	}
+
+	return newitems
 }

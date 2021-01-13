@@ -39,6 +39,7 @@ func main() {
 	}
 
 	doUpdate := flag.Bool("u", false, "Update data and exit. Consider running with this option as cron task")
+	feelingLucky := flag.Bool("l", false, "Feeling lucky? Add this flag to skip the run prompt if the other args filter the actions down to just a single one.")
 	flag.Parse()
 
 	if *doUpdate == true {
@@ -48,19 +49,26 @@ func main() {
 		readCacheDataForActiveModules()
 	}
 
-	params := os.Args[1:]
+	params := remove(os.Args[1:], "-l")
 	tags := TagsFromStrings(params)
 	var actions []action
 	for _, module := range activeModules {
 		actions = append(actions, module.CreateActions(tags)...)
 	}
+	doRun := func(a action) {
+		message := a.Run()
+		fmt.Println(message)
+		os.Exit(0)
+	}
 	if len(actions) == 1 {
 		action := actions[0]
-		fmt.Printf("Run %s? (Y/n) ", action.GetLabel())
-		if readBool() {
-			message := action.Run()
-			fmt.Println(message)
-			return
+		if *feelingLucky {
+			doRun(action)
+		} else {
+			fmt.Printf("Run %s? (Y/n) ", action.GetLabel())
+			if readBool() {
+				doRun(action)
+			}
 		}
 	}
 
