@@ -1,0 +1,20 @@
+# Use this section to (de-)activate modules. Active modules might need further
+# configuration
+Activation:
+  Bitbucket: true
+  Jenkins:   true
+  Timestamp: true
+
+# You can remove this part if you deactivate the bitbucket module
+Bitbucket:
+  http-url: https://example.com/bitbucket # URL of the bitbucket installation
+  username: bitbucket_username            # username for basic auth
+  password: bitbucket_password            # password for basic auth
+
+# You can remove this part if you deactivate the jenkins module
+Jenkins:
+  http-url: https://example.com/jenkins # URL of the jenkins installation
+  username: jenkins_username            # username for basic auth
+  token:    jenkins_token               # token for basic auth.
+                                        # See here if you don't know how to create one:
+                                        # https://narenchejara.medium.com/20973618a493
