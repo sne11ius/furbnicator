@@ -96,6 +96,19 @@ The RobinModule will support external task definitions e.g. shell scripts. You
 might wonder why you need a task runner to run shell scripts if you already have
 ... a shell. Well, don't ask me :D
 
+### Spotify
+
+People will never take us seriously without this ;)
+
+- mpris would work without much hassle, but only on linux
+- web api would work cross platfrom, but isn't fun because authorization
+- go with mpris. if anyone wants windows/mac, they can open pr with scripting
+  solutions
+
+### Web search (ddg)
+
+- https://github.com/psheets/ddgquery
+
 ## Build
 
 - `go build`
