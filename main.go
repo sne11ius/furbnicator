@@ -175,7 +175,6 @@ func updateModuleSettings() {
 	configDir := filepath.Join(home, ".config", "furbnicator")
 	viper.SetConfigName("furbnicator")
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath(".")
 	viper.AddConfigPath(configDir)
 	viper.AutomaticEnv()
 	if err := viper.ReadInConfig(); err != nil {
