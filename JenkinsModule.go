@@ -118,7 +118,7 @@ type JenkinsBrowseAction struct {
 }
 
 func (j JenkinsBrowseAction) GetLabel() string {
-	return "[jenkins] BROWSE " + j.job.Name
+	return "[jenkins[] BROWSE " + j.job.Name
 }
 
 func (j JenkinsBrowseAction) Run() string {
@@ -136,7 +136,7 @@ type JenkinsRunJobAction struct {
 }
 
 func (j JenkinsRunJobAction) GetLabel() string {
-	return "[jenkins] RUN " + j.job.Name
+	return "[jenkins[] RUN " + j.job.Name
 }
 
 func (j JenkinsRunJobAction) Run() string {

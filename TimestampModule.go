@@ -47,7 +47,7 @@ type TimestampAction struct {
 }
 
 func (t TimestampAction) GetLabel() string {
-	return "[timestamp] " + t.tstype + " " + t.value
+	return "[timestamp[] " + t.tstype + " " + t.value
 }
 
 func (t TimestampAction) Run() string {

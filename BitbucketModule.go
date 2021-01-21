@@ -196,7 +196,7 @@ type BitbucketBrowseAction struct {
 }
 
 func (b BitbucketBrowseAction) GetLabel() string {
-	return "[bitbucket] BROWSE " + b.repo.Repository.Name
+	return "[bitbucket[] BROWSE " + b.repo.Repository.Name
 }
 
 func (b BitbucketBrowseAction) Run() string {
@@ -212,7 +212,7 @@ type BitbucketCloneAction struct {
 }
 
 func (b BitbucketCloneAction) GetLabel() string {
-	return "[bitbucket] CLONE " + b.repo.Repository.Name
+	return "[bitbucket[] CLONE " + b.repo.Repository.Name
 }
 
 func (b BitbucketCloneAction) Run() string {
