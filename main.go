@@ -28,6 +28,7 @@ var modules = []Module{
 	NewJenkinsModule(),
 	NewBitbucketModule(),
 	NewTimestampModule(),
+	NewDuckDuckGoModule(),
 }
 
 var activeModules []Module

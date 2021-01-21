@@ -4,6 +4,8 @@ Activation:
   Bitbucket: true
   Jenkins:   true
   Timestamp: true
+  DuckDuckGo: false # Set this to true if you want to init web searches via ddg
+                    # from furbnicator
 
 # You can remove this part if you deactivate the bitbucket module
 Bitbucket:
