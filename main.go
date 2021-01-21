@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"github.com/bep/debounce"
 	"github.com/gdamore/tcell/v2"
 	"github.com/mitchellh/go-homedir"
 	"github.com/rivo/tview"
@@ -13,6 +14,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 type action interface {
@@ -88,21 +90,28 @@ func main() {
 	for _, action := range actions {
 		list.AddItem(action.GetLabel(), "", 0, nil)
 	}
+
+	var searchArgs []string
+	doSearch := func() {
+		tags := TagsFromStrings(searchArgs)
+		actions = []action{}
+		for _, module := range activeModules {
+			actions = append(actions, module.CreateActions(tags)...)
+		}
+		list.Clear()
+		for _, action := range actions {
+			list.AddItem(action.GetLabel(), "", 0, nil)
+		}
+		app.Draw()
+	}
+	debounced := debounce.New(200 * time.Millisecond)
 	inputField := tview.NewInputField().
 		SetLabel("furbnicator > ﴪ >>> ").
 		SetFieldWidth(0).
 		SetText(initialText).
 		SetChangedFunc(func(text string) {
-			searchArgs := strings.Split(text, " ")
-			tags := TagsFromStrings(searchArgs)
-			actions = []action{}
-			for _, module := range activeModules {
-				actions = append(actions, module.CreateActions(tags)...)
-			}
-			list.Clear()
-			for _, action := range actions {
-				list.AddItem(action.GetLabel(), "", 0, nil)
-			}
+			searchArgs = strings.Split(text, " ")
+			debounced(doSearch)
 		}).
 		SetDoneFunc(func(key tcell.Key) {
 			if key == tcell.KeyEsc {
@@ -180,7 +189,7 @@ func updateModuleSettings() {
 	if err := viper.ReadInConfig(); err != nil {
 		fullConfigName := filepath.Join(configDir, "furbnicator.yaml")
 		localConfigName := "./furbnicator.yaml"
-		log.Fatalf("No config found at %s or %s\n", localConfigName, fullConfigName)
+		log.Fatalf("No/invalid config found at %s or %s\n: %v", localConfigName, fullConfigName, err)
 	}
 	for i := range modules {
 		module := modules[i]
