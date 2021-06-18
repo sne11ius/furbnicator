@@ -26,6 +26,7 @@ var activationModule = NewActivationModule()
 var modules = []Module{
 	activationModule,
 	NewJenkinsModule(),
+	NewBitbucketServerModule(),
 	NewBitbucketModule(),
 	NewTimestampModule(),
 	NewDuckDuckGoModule(),

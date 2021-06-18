@@ -1,7 +1,9 @@
 # Use this section to (de-)activate modules. Active modules might need further
 # configuration
 Activation:
-  Bitbucket: true
+  Bitbucket: true # bitbucket cloud
+  BitbucketServer: false # This module still works but is deprecated since
+                         # atlassian eol'ed bitbucket server
   Jenkins:   true
   Timestamp: true
   DuckDuckGo: false # Set this to true if you want to init web searches via ddg
@@ -9,6 +11,13 @@ Activation:
 
 # You can remove this part if you deactivate the bitbucket module
 Bitbucket:
+  username: bitbucket_org_username
+  password: should_use_an_app_password_for_this
+
+# You can remove this part if you deactivate the bitbucket server module
+# Since atlassian seems to eol on premise installations, this module is
+# deprecated.
+BitbucketServer:
   http-url: https://example.com/bitbucket # URL of the bitbucket installation
   username: bitbucket_username            # username for basic auth
   password: bitbucket_password            # password for basic auth

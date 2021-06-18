@@ -21,7 +21,8 @@ func launchUrl(url string) error {
 		cmd = "xdg-open"
 	}
 	args = append(args, url)
-	return exec.Command(cmd, args...).Start()
+	proc := exec.Command(cmd, args...)
+	return proc.Run()
 }
 
 // From https://stackoverflow.com/a/39324149

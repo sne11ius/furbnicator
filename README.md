@@ -4,7 +4,7 @@ A tool to simplify everyday tasks for the common corporate programmer.
 
 In other words:
 
-- Coworker: "Can you help me out here?"
+- Coworker: "Can you help me out here real quick?"
 
   You: "Sure, just gimme the name of your repo and I'll `fu` me the source.
         Did you know I hate browsing code via web?"
@@ -26,10 +26,10 @@ provided by all activated modules.
 
 ### Bitbucket
 
-The bitbucket module can index repositories from a single bitbucket server
-installation. Especially handy if you regularly need to browse or clone
-repositories. If you work with a single repo most of the time, this module might
-not help you very much.
+The bitbucket server module can index repositories from bitbucket.org.
+Especially handy if you regularly need to browse or clone repositories. If you
+work with a single repo most of the time, this module might not help you very
+much.
 
 #### Tasks
 
@@ -53,6 +53,23 @@ The jenkins meodule can index the jobs in a single jenkins installation.
 ### Timestamps
 
 Displays the current unix or java timestamp.
+
+### Bitbucket server
+
+#### Deprecation warning
+
+This module is deprecated since atlassian eol'ed the on premise version of
+bitbucket.
+
+The bitbucket server module can index repositories from a single bitbucket
+server installation. Especially handy if you regularly need to browse or clone
+repositories. If you work with a single repo most of the time, this module might
+not help you very much.
+
+#### Tasks
+
+- Clone repositories
+- Browse repositories
 
 ## Demo run
 
@@ -89,6 +106,11 @@ run the action immediately. Use `-l` (feeling lucky) to skip this promt:
   only if there is just one.
 
 ## Todo
+
+### Notification Module
+
+Get notifications for noteworthy stuff. Like newly created bitbucket repos in
+your ogranization.
 
 ### RobinModule
 

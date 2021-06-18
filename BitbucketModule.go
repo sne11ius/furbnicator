@@ -3,25 +3,25 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/sne11ius/bitclient"
+	"github.com/ktrysmt/go-bitbucket"
 	"github.com/spf13/viper"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"reflect"
 	"strings"
 	"sync"
 )
 
 type BitbucketModule struct {
-	httpUrl                string
 	username               string
 	password               string
-	repositoriesWithReadme []RepositoryWithReadme
+	repositoriesWithReadme []BitbucketRepositoryWithReadme
 }
 
-type RepositoryWithReadme struct {
-	Repository bitclient.Repository `json:"repository"`
+type BitbucketRepositoryWithReadme struct {
+	Repository bitbucket.Repository `json:"repository"`
 	Readme     string               `json:"readme"`
 }
 
@@ -42,13 +42,7 @@ func (b *BitbucketModule) CanBeDisabled() bool {
 }
 
 func (b *BitbucketModule) UpdateSettings() {
-	configKey := b.Name() + ".http-url"
-	if !viper.IsSet(configKey) {
-		log.Fatalf("Missing configuration key `%s` (eg. 'https://atlassian.example.com/bitbucket')", configKey)
-	}
-	b.httpUrl = viper.GetString(configKey)
-
-	configKey = b.Name() + ".username"
+	configKey := b.Name() + ".username"
 	if !viper.IsSet(configKey) {
 		log.Fatalf("Missing configuration key `%s` (eg. 'myusername')", configKey)
 	}
@@ -65,45 +59,35 @@ func (b *BitbucketModule) NeedsExternalData() bool {
 	return true
 }
 
-func (b *BitbucketModule) UpdateExternalData() {
-	allRepositories := b.LoadRepositories()
-	b.repositoriesWithReadme = b.LoadReadmes(allRepositories)
-	fmt.Printf("  - Updated %d projects\n", len(b.repositoriesWithReadme))
-}
-
-func (b BitbucketModule) LoadRepositories() []bitclient.Repository {
-	client := bitclient.NewBitClient(b.httpUrl, b.username, b.password)
-
-	requestParams := bitclient.PagedRequest{
-		Limit: 10000,
-		Start: 0,
-	}
-	projectsResponse, err := client.GetProjects(requestParams)
+func (b *BitbucketModule) LoadRepositories() []bitbucket.Repository {
+	client := bitbucket.NewBasicAuth(b.username, b.password)
+	workspaces, err := client.Workspaces.List()
 
 	if err != nil {
-		log.Fatalf("Cannot list projects: %v", err)
+		log.Fatalf("Cannot list workspaces: %v", err)
 	}
 
-	projects := projectsResponse.Values
-
-	numProjects := len(projects)
+	numWorkspaces := len(workspaces.Workspaces)
 	var wg sync.WaitGroup
-	wg.Add(numProjects)
-	queue := make(chan []bitclient.Repository, 1)
-	for i := 0; i < numProjects; i++ {
+	wg.Add(numWorkspaces)
+	queue := make(chan []bitbucket.Repository, 1)
+	for i := 0; i < numWorkspaces; i++ {
 		go func(i int) {
-			project := projects[i]
-			repositories, err := client.GetRepositories(project.Key, bitclient.PagedRequest{
-				Limit: 1000,
-				Start: 0,
-			})
-			if err != nil {
-				log.Fatalf("Cannot get repositories for %s", project.Name)
+			workspace := workspaces.Workspaces[i]
+			optr := &bitbucket.RepositoriesOptions{
+				Owner: workspace.Slug,
+				Role:  "",
 			}
-			queue <- repositories.Values
+
+			repositories, err := client.Repositories.ListForAccount(optr)
+			if err != nil {
+				log.Fatalf("Cannot get repositories for %s; %v", workspace.UUID, err)
+			}
+			fmt.Printf("  - %d repositories in team %v\n", len(repositories.Items), workspace.Name)
+			queue <- repositories.Items
 		}(i)
 	}
-	var allRepositories []bitclient.Repository
+	var allRepositories []bitbucket.Repository
 	go func() {
 		for t := range queue {
 			allRepositories = append(allRepositories, t...)
@@ -114,25 +98,22 @@ func (b BitbucketModule) LoadRepositories() []bitclient.Repository {
 	return allRepositories
 }
 
-func (b *BitbucketModule) LoadReadmes(repositories []bitclient.Repository) []RepositoryWithReadme {
+func (b *BitbucketModule) LoadReadmes(repositories []bitbucket.Repository) []BitbucketRepositoryWithReadme {
 	numRepositories := len(repositories)
 	var wg sync.WaitGroup
 	wg.Add(numRepositories)
-	queue := make(chan RepositoryWithReadme, 1)
+	queue := make(chan BitbucketRepositoryWithReadme, 1)
 	for i := 0; i < numRepositories; i++ {
 		go func(i int) {
 			repository := repositories[i]
-			readme, err := b.GetReadmeText(repository, "develop")
-			if err != nil {
-				readme, _ = b.GetReadmeText(repository, "master")
-			}
-			queue <- RepositoryWithReadme{
+			readme, _ := b.GetReadmeText(repository)
+			queue <- BitbucketRepositoryWithReadme{
 				Repository: repository,
 				Readme:     readme,
 			}
 		}(i)
 	}
-	var repositoriesWithReadmes []RepositoryWithReadme
+	var repositoriesWithReadmes []BitbucketRepositoryWithReadme
 	go func() {
 		for t := range queue {
 			repositoriesWithReadmes = append(repositoriesWithReadmes, t)
@@ -143,12 +124,17 @@ func (b *BitbucketModule) LoadReadmes(repositories []bitclient.Repository) []Rep
 	return repositoriesWithReadmes
 }
 
-func (b *BitbucketModule) GetReadmeText(repository bitclient.Repository, branch string) (string, error) {
-	var selfLink = repository.Links["self"][0]["href"]
-	var baseLink = strings.TrimSuffix(selfLink, "/browse")
-	var readmeLink = baseLink + "/raw/README.md?at=refs%2Fheads%2F" + branch
+func (b *BitbucketModule) GetReadmeText(repository bitbucket.Repository) (string, error) {
+	// Haha, I'm sure its not me that messed up. Thats the beauty of golang :D
+	iter := reflect.ValueOf(repository.Links["self"]).MapRange()
+	var selfLink string
+	for iter.Next() {
+		selfLink = iter.Value().Interface().(string)
+		break
+	}
+	var srcLink = selfLink + "/src"
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", readmeLink, nil)
+	req, err := http.NewRequest("GET", srcLink, nil)
 	if err != nil {
 		return "", err
 	}
@@ -162,16 +148,77 @@ func (b *BitbucketModule) GetReadmeText(repository bitclient.Repository, branch 
 			log.Fatalf("Could not close response body: %v", err)
 		}
 	}()
+	// Ok, I'll admit its not golangs fault from here on ;)
 	if resp.StatusCode == http.StatusOK {
 		bodyBytes, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
 			return "", err
 		} else {
-			return string(bodyBytes), nil
+			var jsonMap map[string]interface{}
+			err := json.Unmarshal(bodyBytes, &jsonMap)
+
+			if err != nil {
+				log.Fatalf("Cannot parse bitbucket api response.")
+			}
+			iter := reflect.ValueOf(jsonMap).MapRange()
+			for iter.Next() {
+				key := iter.Key()
+				if key.String() == "values" {
+					values := iter.Value()
+					kind := values.Kind()
+					if kind == reflect.Interface {
+						items := values.Interface().([]interface{})
+						for i := 0; i < len(items); i++ {
+							item := items[i]
+							file := item.(map[string]interface{})
+							path := file["path"].(string)
+							if strings.EqualFold(path, "README.md") {
+								iter := reflect.ValueOf(file["links"]).MapRange()
+								var selfLink interface{}
+								for iter.Next() {
+									selfLink = iter.Value().Interface().(map[string]interface{})
+									readmeLink := selfLink.(map[string]interface{})["href"].(string)
+									req, err := http.NewRequest("GET", readmeLink, nil)
+									if err != nil {
+										return "", err
+									}
+									req.SetBasicAuth(b.username, b.password)
+									resp, err := client.Do(req)
+									if err != nil {
+										return "", err
+									}
+									defer func() {
+										if err := resp.Body.Close(); err != nil {
+											log.Fatalf("Could not close response body: %v", err)
+										}
+									}()
+									if resp.StatusCode == http.StatusOK {
+										bodyBytes, err := ioutil.ReadAll(resp.Body)
+										if err != nil {
+											return "", err
+										} else {
+											return string(bodyBytes), nil
+										}
+									} else {
+										return "", fmt.Errorf("could not get README. Status: %v", resp.StatusCode)
+									}
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 	} else {
 		return "", fmt.Errorf("could not get README. Status: %v", resp.StatusCode)
 	}
+	return "", nil
+}
+
+func (b *BitbucketModule) UpdateExternalData() {
+	allRepositories := b.LoadRepositories()
+	fmt.Printf("  - Analyzing %d repositories\n", len(allRepositories))
+	b.repositoriesWithReadme = b.LoadReadmes(allRepositories)
 }
 
 func (b *BitbucketModule) WriteExternalData(file *os.File) {
@@ -192,7 +239,7 @@ func (b *BitbucketModule) ReadExternalData(data []byte) {
 }
 
 type BitbucketBrowseAction struct {
-	repo RepositoryWithReadme
+	repo BitbucketRepositoryWithReadme
 }
 
 func (b BitbucketBrowseAction) GetLabel() string {
@@ -200,7 +247,7 @@ func (b BitbucketBrowseAction) GetLabel() string {
 }
 
 func (b BitbucketBrowseAction) Run() string {
-	url := b.repo.Repository.Links["self"][0]["href"]
+	url := b.repo.Repository.Links["html"].(map[string]interface{})["href"].(string)
 	if err := launchUrl(url); err != nil {
 		log.Fatalf("Could not browse %s: %v", url, err)
 	}
@@ -208,7 +255,7 @@ func (b BitbucketBrowseAction) Run() string {
 }
 
 type BitbucketCloneAction struct {
-	repo RepositoryWithReadme
+	repo BitbucketRepositoryWithReadme
 }
 
 func (b BitbucketCloneAction) GetLabel() string {
@@ -218,15 +265,18 @@ func (b BitbucketCloneAction) GetLabel() string {
 func (b BitbucketCloneAction) Run() string {
 	var cloneUrl string
 	found := false
-	for _, link := range b.repo.Repository.Links["clone"] {
-		if strings.HasPrefix(link["href"], "ssh://") {
-			cloneUrl = link["href"]
+	cloneLinks := b.repo.Repository.Links["clone"].([]interface{})
+	for _, link := range cloneLinks {
+		linkMap := link.(map[string]interface{})
+		name := linkMap["name"].(string)
+		if name == "ssh" {
+			cloneUrl = linkMap["href"].(string)
 			found = true
 			break
 		}
 	}
 	if !found {
-		cloneUrl = b.repo.Repository.Links["clone"][0]["href"]
+		log.Fatalf("No ssh clone link found for repo %s", b.repo.Repository.Name)
 	}
 	if err := runGitClone(cloneUrl); err != nil {
 		log.Fatalf("Could not clone %s: %v", cloneUrl, err)
