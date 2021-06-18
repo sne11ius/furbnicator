@@ -54,8 +54,38 @@ func (t TimestampAction) Run() string {
 	return "Current " + t.tstype + " timestamp: " + t.value
 }
 
+func msToTime(ms string) (time.Time, error) {
+	msInt, err := strconv.ParseInt(ms, 10, 64)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	return time.Unix(0, msInt*int64(time.Millisecond)), nil
+}
+
 func (t TimestampModule) CreateActions(tags []Tag) []action {
 	var actions []action
+	for _, tag := range tags {
+		if len(tag.value) == 10 {
+			val, err := strconv.ParseInt(tag.value, 10, 64)
+			if err == nil {
+				tsUnix := time.Unix(val, 0)
+				actions = append(actions, TimestampAction{
+					tstype: "UNIX",
+					value:  tsUnix.Format(time.RFC3339),
+				})
+			}
+		}
+		if len(tag.value) == 13 {
+			val, err := msToTime(tag.value)
+			if err == nil {
+				actions = append(actions, TimestampAction{
+					tstype: "JAVA",
+					value:  val.Format(time.RFC3339),
+				})
+			}
+		}
+	}
 	now := time.Now()
 	tsUnix := now.Unix()
 	tsJava := now.UnixNano() / 1e6
