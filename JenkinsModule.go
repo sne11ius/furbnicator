@@ -109,7 +109,7 @@ func (j *JenkinsModule) WriteExternalData(file *os.File) {
 func (j *JenkinsModule) ReadExternalData(data []byte) {
 	err := json.Unmarshal(data, &j.jobs)
 	if err != nil {
-		log.Fatalf("Cannot read jenins job cache. Consider running with `-u` parameter.")
+		log.Fatalf("Cannot read jenkins job cache. Consider running with `-u` parameter.")
 	}
 }
 
