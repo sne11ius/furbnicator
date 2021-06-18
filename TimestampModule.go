@@ -51,7 +51,7 @@ func (t TimestampAction) GetLabel() string {
 }
 
 func (t TimestampAction) Run() string {
-	return "Current " + t.tstype + " timestamp: " + t.value
+	return t.tstype + " timestamp: " + t.value
 }
 
 func msToTime(ms string) (time.Time, error) {
