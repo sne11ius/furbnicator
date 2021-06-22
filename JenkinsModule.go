@@ -12,14 +12,17 @@ import (
 )
 
 type JenkinsModule struct {
-	httpUrl  string
-	username string
-	token    string
-	jobs     []Job
+	httpUrl            string
+	username           string
+	token              string
+	jobs               []Job
+	notificationModule *DelegatingNotificationsModule
 }
 
-func NewJenkinsModule() *JenkinsModule {
-	return new(JenkinsModule)
+func NewJenkinsModule(notifications *DelegatingNotificationsModule) *JenkinsModule {
+	j := new(JenkinsModule)
+	j.notificationModule = notifications
+	return j
 }
 
 func (j *JenkinsModule) Name() string {
@@ -92,6 +95,29 @@ func (j *JenkinsModule) UpdateExternalData() {
 		}
 	}()
 	wg.Wait()
+
+	var newJobDetails []Job
+	for _, job := range allJobDetails {
+		found := false
+		for _, existingJob := range j.jobs {
+			if job.Name == existingJob.Name {
+				found = true
+				break
+			}
+		}
+		if !found {
+			newJobDetails = append(newJobDetails, job)
+		}
+	}
+
+	if len(newJobDetails) > 0 {
+		message := "Es gibt neue Jenkins-Jobs\n"
+		for _, job := range newJobDetails {
+			message = message + "- " + job.Name + " -> " + job.Url + "\n"
+		}
+		j.notificationModule.AddNotification(message)
+	}
+
 	j.jobs = allJobDetails
 	fmt.Printf("  - Updated %d jobs\n", len(j.jobs))
 }
@@ -106,11 +132,12 @@ func (j *JenkinsModule) WriteExternalData(file *os.File) {
 	}
 }
 
-func (j *JenkinsModule) ReadExternalData(data []byte) {
+func (j *JenkinsModule) ReadExternalData(data []byte) error {
 	err := json.Unmarshal(data, &j.jobs)
 	if err != nil {
 		log.Fatalf("Cannot read jenkins job cache. Consider running with `-u` parameter.")
 	}
+	return nil
 }
 
 type JenkinsBrowseAction struct {

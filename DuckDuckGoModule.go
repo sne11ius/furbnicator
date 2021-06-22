@@ -39,8 +39,9 @@ func (d *DuckDuckGoModule) WriteExternalData(_ *os.File) {
 	// this intentionally empty
 }
 
-func (d *DuckDuckGoModule) ReadExternalData(_ []byte) {
+func (d *DuckDuckGoModule) ReadExternalData(_ []byte) error {
 	// this intentionally empty
+	return nil
 }
 
 type DuckDuckGoSearchAction struct {
@@ -62,6 +63,13 @@ func (d DuckDuckGoSearchAction) Run() string {
 
 func (d *DuckDuckGoModule) CreateActions(tags []Tag) []action {
 	if len(tags) != 0 {
+		for _, tag := range tags {
+			if tag.matchMode != Contains {
+				// Looks like the user is looking for something spectific - not
+				// very likely they wanted to ddg
+				return []action{}
+			}
+		}
 		query := tags[0].value
 		queryLabel := tags[0].value
 		for i, tag := range tags {

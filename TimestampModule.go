@@ -106,6 +106,7 @@ func (t TimestampModule) CreateActions(tags []Tag) []action {
 	return actions
 }
 
-func (t TimestampModule) ReadExternalData(_ []byte) {
+func (t TimestampModule) ReadExternalData(_ []byte) error {
 	// this intentionally empty
+	return nil
 }

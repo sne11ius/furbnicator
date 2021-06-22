@@ -22,14 +22,28 @@ type action interface {
 	Run() string
 }
 
+var emailNotificationsModule = NewEmailNotificationsModule()
+var notificationModules = []NotificationModule{
+	emailNotificationsModule,
+}
+var delegatingNotificationsModule = NewDelegatingNotificationsModule(notificationModules)
+
 var activationModule = NewActivationModule()
+var jenkinsModule = NewJenkinsModule(delegatingNotificationsModule)
+var bitbucketServerModule = NewBitbucketServerModule()
+var bitbucketModule = NewBitbucketModule(delegatingNotificationsModule)
+var timestampModule = NewTimestampModule()
+var ddgModule = NewDuckDuckGoModule()
+
 var modules = []Module{
 	activationModule,
-	NewJenkinsModule(),
-	NewBitbucketServerModule(),
-	NewBitbucketModule(),
-	NewTimestampModule(),
-	NewDuckDuckGoModule(),
+	jenkinsModule,
+	bitbucketServerModule,
+	bitbucketModule,
+	timestampModule,
+	ddgModule,
+	emailNotificationsModule,
+	delegatingNotificationsModule,
 }
 
 var activeModules []Module
@@ -48,6 +62,7 @@ func main() {
 
 	if *doUpdate == true {
 		updateDataForActiveModules()
+		delegatingNotificationsModule.notify()
 		return
 	} else {
 		readCacheDataForActiveModules()
@@ -205,6 +220,11 @@ func updateDataForActiveModules() {
 	for _, module := range activeModules {
 		if module.NeedsExternalData() {
 			fmt.Printf("Updating %s\n", module.Name())
+			err := readCacheDataForModule(module)
+			if err != nil {
+				// Das ist an dieser Stelle nicht schlimm. Vielleicht ist das ja
+				// einfach wirklich noch nie gelaufen?
+			}
 			module.UpdateExternalData()
 			filenameForModule := LocateConfigFile(module)
 			file, err := os.Create(filenameForModule)
@@ -223,14 +243,20 @@ func updateDataForActiveModules() {
 func readCacheDataForActiveModules() {
 	for _, module := range activeModules {
 		if module.NeedsExternalData() {
-			filenameForModule := LocateConfigFile(module)
-			data, err := ioutil.ReadFile(filenameForModule)
-			if err != nil {
-				log.Fatalf("Cannot read configuration from %s. Consider running with `-u` parameter first.", filenameForModule)
+			if err := readCacheDataForModule(module); err != nil {
+				log.Fatalf("Cannot read configuration for module %s. Consider running with `-u` parameter first. (%v)", module.Name(), err)
 			}
-			module.ReadExternalData(data)
 		}
 	}
+}
+
+func readCacheDataForModule(module Module) error {
+	filenameForModule := LocateConfigFile(module)
+	data, err := ioutil.ReadFile(filenameForModule)
+	if err != nil {
+		return err
+	}
+	return module.ReadExternalData(data)
 }
 
 func LocateConfigFile(module Module) string {

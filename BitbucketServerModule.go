@@ -184,11 +184,12 @@ func (b *BitbucketServerModule) WriteExternalData(file *os.File) {
 	}
 }
 
-func (b *BitbucketServerModule) ReadExternalData(data []byte) {
+func (b *BitbucketServerModule) ReadExternalData(data []byte) error {
 	err := json.Unmarshal(data, &b.repositoriesWithReadme)
 	if err != nil {
 		log.Fatalf("Cannot read bitbucket project cache. Consider running with `-u` parameter.")
 	}
+	return nil
 }
 
 type BitbucketServerBrowseAction struct {

@@ -18,6 +18,7 @@ type BitbucketModule struct {
 	username               string
 	password               string
 	repositoriesWithReadme []BitbucketRepositoryWithReadme
+	notificationModule     *DelegatingNotificationsModule
 }
 
 type BitbucketRepositoryWithReadme struct {
@@ -25,8 +26,10 @@ type BitbucketRepositoryWithReadme struct {
 	Readme     string               `json:"readme"`
 }
 
-func NewBitbucketModule() *BitbucketModule {
-	return new(BitbucketModule)
+func NewBitbucketModule(notificationModule *DelegatingNotificationsModule) *BitbucketModule {
+	b := new(BitbucketModule)
+	b.notificationModule = notificationModule
+	return b
 }
 
 func (b *BitbucketModule) Name() string {
@@ -218,7 +221,36 @@ func (b *BitbucketModule) GetReadmeText(repository bitbucket.Repository) (string
 func (b *BitbucketModule) UpdateExternalData() {
 	allRepositories := b.LoadRepositories()
 	fmt.Printf("  - Analyzing %d repositories\n", len(allRepositories))
-	b.repositoriesWithReadme = b.LoadReadmes(allRepositories)
+	updatedReposList := b.LoadReadmes(allRepositories)
+	var newRepos []BitbucketRepositoryWithReadme
+	for _, repo := range updatedReposList {
+		slug := repo.Repository.Slug
+		found := false
+		for _, previewsRepo := range b.repositoriesWithReadme {
+			if slug == previewsRepo.Repository.Slug {
+				found = true
+				break
+			}
+			if found {
+				break
+			}
+		}
+		if !found {
+			newRepos = append(newRepos, repo)
+		}
+	}
+	if len(newRepos) > 0 {
+		b.notificationModule.AddNotification(prepareNotificationsText(newRepos))
+	}
+	b.repositoriesWithReadme = updatedReposList
+}
+
+func prepareNotificationsText(createdRepos []BitbucketRepositoryWithReadme) string {
+	result := "New repositories found:\n"
+	for _, repo := range createdRepos {
+		result = result + "- " + repo.Repository.Name + "\n"
+	}
+	return result
 }
 
 func (b *BitbucketModule) WriteExternalData(file *os.File) {
@@ -231,11 +263,12 @@ func (b *BitbucketModule) WriteExternalData(file *os.File) {
 	}
 }
 
-func (b *BitbucketModule) ReadExternalData(data []byte) {
+func (b *BitbucketModule) ReadExternalData(data []byte) error {
 	err := json.Unmarshal(data, &b.repositoriesWithReadme)
 	if err != nil {
-		log.Fatalf("Cannot read bitbucket project cache. Consider running with `-u` parameter.")
+		return err //log.Fatalf("Cannot read bitbucket project cache. Consider running with `-u` parameter.")
 	}
+	return nil
 }
 
 type BitbucketBrowseAction struct {

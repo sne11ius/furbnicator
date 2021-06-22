@@ -1,8 +1,6 @@
 package main
 
-import (
-	"os"
-)
+import "os"
 
 type Module interface {
 	Name() string
@@ -14,5 +12,5 @@ type Module interface {
 	UpdateExternalData()
 	WriteExternalData(file *os.File)
 	CreateActions(tags []Tag) []action
-	ReadExternalData(data []byte)
+	ReadExternalData(data []byte) error
 }

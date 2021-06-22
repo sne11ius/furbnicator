@@ -60,8 +60,9 @@ func (a *ActivationModule) WriteExternalData(_ *os.File) {
 	// this intentionally empty
 }
 
-func (a *ActivationModule) ReadExternalData(_ []byte) {
+func (a *ActivationModule) ReadExternalData(_ []byte) error {
 	// this intentionally empty
+	return nil
 }
 
 func (a *ActivationModule) CreateActions(_ []Tag) []action {

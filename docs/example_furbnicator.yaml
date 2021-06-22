@@ -8,6 +8,8 @@ Activation:
   Timestamp: true
   DuckDuckGo: false # Set this to true if you want to init web searches via ddg
                     # from furbnicator
+  EmailNotifications: true # Enable email notifications, disabling this module
+                           # does not really work currently ;)
 
 # You can remove this part if you deactivate the bitbucket module
 Bitbucket:
@@ -29,3 +31,10 @@ Jenkins:
   token:    jenkins_token               # token for basic auth.
                                         # See here if you don't know how to create one:
                                         # https://narenchejara.medium.com/20973618a493
+
+EmailNotifications:
+  smtp-server: smtp.example.com
+  smtp-port: 587
+  username: "user@example.com"
+  password: "exaple_password"
+  recipient-address: "recipient@example.com"
