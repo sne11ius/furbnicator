@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/smtp"
 	"os"
-	"strings"
 )
 
 type EmailNotificationsModule struct {
@@ -21,13 +20,14 @@ func NewEmailNotificationsModule() *EmailNotificationsModule {
 	return new(EmailNotificationsModule)
 }
 
-func (e *EmailNotificationsModule) notify(notifications []string) {
+func (e *EmailNotificationsModule) notify(notifications []Notification) {
+	fmt.Printf("Sending email notifications\n")
 	for _, notification := range notifications {
 		auth := smtp.PlainAuth("", e.username, e.password, e.smtpServer)
-		contentType := "Content-Type: text/html; charset=UTF-8"
+		contentType := "Content-Type: Text/plain; charset=UTF-8"
 
 		s := fmt.Sprintf("To:%s\r\nFrom:%s\r\nSubject:%s\r\n%s\r\n\r\n%s",
-			e.recipientAddress, e.username, "[ﴪ] Notification", contentType, strings.Replace(notification, "\n", "<br>", -1))
+			e.recipientAddress, e.username, "[furbnicator] "+notification.Title, contentType, notification.Text)
 		msg := []byte(s)
 		addr := fmt.Sprintf("%s:%d", e.smtpServer, e.smptPort)
 		err := smtp.SendMail(addr, auth, e.username, []string{e.recipientAddress}, msg)
@@ -42,7 +42,7 @@ func (e *EmailNotificationsModule) Name() string {
 }
 
 func (e *EmailNotificationsModule) Description() string {
-	return "Sends notificationModule about changes in other modules to via email"
+	return "Sends notifications about changes in other modules to via email"
 }
 
 func (e *EmailNotificationsModule) CanBeDisabled() bool {

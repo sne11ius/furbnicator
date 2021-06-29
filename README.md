@@ -31,6 +31,8 @@ Especially handy if you regularly need to browse or clone repositories. If you
 work with a single repo most of the time, this module might not help you very
 much.
 
+This module supports [notifications](#Notifications).
+
 #### Tasks
 
 - Clone repositories
@@ -39,6 +41,8 @@ much.
 ### Jenkins
 
 The jenkins meodule can index the jobs in a single jenkins installation.
+
+This module supports [notifications](#Notifications).
 
 #### Tasks
 
@@ -53,6 +57,19 @@ The jenkins meodule can index the jobs in a single jenkins installation.
 ### Timestamps
 
 Displays the current unix or java timestamp.
+
+### Notifications
+
+furbnicator can send notifications eg. when it finds a new bitbucket repository.
+
+
+#### Email notifications
+
+Sends notifications about changes in other modules via email.
+
+#### MS Teams notifications
+
+Sends notifications about changes in other modules via MS Teams.
 
 ### Bitbucket server
 
@@ -106,11 +123,6 @@ run the action immediately. Use `-l` (feeling lucky) to skip this promt:
   only if there is just one.
 
 ## Todo
-
-### Notification Module
-
-Get notifications for noteworthy stuff. Like newly created bitbucket repos in
-your ogranization.
 
 ### RobinModule
 

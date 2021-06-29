@@ -5,12 +5,14 @@ import (
 )
 
 type DelegatingNotificationsModule struct {
+	activationModule    *ActivationModule
 	notificationModules []NotificationModule
-	notifications       []string
+	notifications       []Notification
 }
 
-func NewDelegatingNotificationsModule(notificationModules []NotificationModule) *DelegatingNotificationsModule {
+func NewDelegatingNotificationsModule(activationModule *ActivationModule, notificationModules []NotificationModule) *DelegatingNotificationsModule {
 	module := new(DelegatingNotificationsModule)
+	module.activationModule = activationModule
 	module.notificationModules = notificationModules
 	return module
 }
@@ -51,12 +53,14 @@ func (t *DelegatingNotificationsModule) ReadExternalData(_ []byte) error {
 	return nil
 }
 
-func (t *DelegatingNotificationsModule) AddNotification(text string) {
-	t.notifications = append(t.notifications, text)
+func (t *DelegatingNotificationsModule) AddNotification(notification Notification) {
+	t.notifications = append(t.notifications, notification)
 }
 
 func (t *DelegatingNotificationsModule) notify() {
 	for _, notificationModule := range t.notificationModules {
-		notificationModule.notify(t.notifications)
+		if t.activationModule.IsNotificationModuleActive(notificationModule) {
+			notificationModule.notify(t.notifications)
+		}
 	}
 }

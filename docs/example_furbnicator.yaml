@@ -6,17 +6,17 @@ Activation:
                          # atlassian eol'ed bitbucket server
   Jenkins:   true
   Timestamp: true
-  DuckDuckGo: false # Set this to true if you want to init web searches via ddg
+  DuckDuckGo: false # Set this to true if you want to start ddg web searches
                     # from furbnicator
-  EmailNotifications: true # Enable email notifications, disabling this module
-                           # does not really work currently ;)
+  EmailNotifications: true # Enable notifications via email
+  MsTeamsNotifications: true # Enable notifications via MS Teams
 
-# You can remove this part if you deactivate the bitbucket module
+# You can omit this part if you deactivate the bitbucket module
 Bitbucket:
   username: bitbucket_org_username
   password: should_use_an_app_password_for_this
 
-# You can remove this part if you deactivate the bitbucket server module
+# You can omit this part if you deactivate the bitbucket server module
 # Since atlassian seems to eol on premise installations, this module is
 # deprecated.
 BitbucketServer:
@@ -24,7 +24,7 @@ BitbucketServer:
   username: bitbucket_username            # username for basic auth
   password: bitbucket_password            # password for basic auth
 
-# You can remove this part if you deactivate the jenkins module
+# You can omit this part if you deactivate the jenkins module
 Jenkins:
   http-url: https://example.com/jenkins # URL of the jenkins installation
   username: jenkins_username            # username for basic auth
@@ -32,9 +32,16 @@ Jenkins:
                                         # See here if you don't know how to create one:
                                         # https://narenchejara.medium.com/20973618a493
 
+# You can omit this part if you deactivate the email notifications module
 EmailNotifications:
   smtp-server: smtp.example.com
   smtp-port: 587
   username: "user@example.com"
   password: "exaple_password"
   recipient-address: "recipient@example.com"
+
+# You can omit this part if you deactivate the ms teams notifications module
+# See here on how to create an incoming webhook:
+# https://docs.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook
+MsTeamsNotifications:
+  webhook-url: https://my-company.webhook.office.com/webhookb2/webhook-id

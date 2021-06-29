@@ -240,17 +240,21 @@ func (b *BitbucketModule) UpdateExternalData() {
 		}
 	}
 	if len(newRepos) > 0 {
-		b.notificationModule.AddNotification(prepareNotificationsText(newRepos))
+		b.notificationModule.AddNotification(prepareBitbucketNotification(newRepos))
 	}
 	b.repositoriesWithReadme = updatedReposList
 }
 
-func prepareNotificationsText(createdRepos []BitbucketRepositoryWithReadme) string {
-	result := "New repositories found:\n"
+func prepareBitbucketNotification(createdRepos []BitbucketRepositoryWithReadme) Notification {
+	text := ""
 	for _, repo := range createdRepos {
-		result = result + "- " + repo.Repository.Name + "\n"
+		text = text + "- " + repo.Repository.Name + "\\n"
 	}
-	return result
+	return Notification{
+		Title:   "New bitbucket repositories found",
+		Text:    text,
+		IconUrl: "https://raw.githubusercontent.com/sne11ius/furbnicator/main/bitbucket-logo.jpeg",
+	}
 }
 
 func (b *BitbucketModule) WriteExternalData(file *os.File) {

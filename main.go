@@ -22,13 +22,15 @@ type action interface {
 	Run() string
 }
 
+var activationModule = NewActivationModule()
 var emailNotificationsModule = NewEmailNotificationsModule()
+var msTeamsNotificationsModule = NewMsTeamsNotificationsModule()
 var notificationModules = []NotificationModule{
+	msTeamsNotificationsModule,
 	emailNotificationsModule,
 }
-var delegatingNotificationsModule = NewDelegatingNotificationsModule(notificationModules)
+var delegatingNotificationsModule = NewDelegatingNotificationsModule(activationModule, notificationModules)
 
-var activationModule = NewActivationModule()
 var jenkinsModule = NewJenkinsModule(delegatingNotificationsModule)
 var bitbucketServerModule = NewBitbucketServerModule()
 var bitbucketModule = NewBitbucketModule(delegatingNotificationsModule)
@@ -42,6 +44,7 @@ var modules = []Module{
 	bitbucketModule,
 	timestampModule,
 	ddgModule,
+	msTeamsNotificationsModule,
 	emailNotificationsModule,
 	delegatingNotificationsModule,
 }

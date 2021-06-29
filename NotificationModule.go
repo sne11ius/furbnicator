@@ -1,5 +1,6 @@
 package main
 
 type NotificationModule interface {
-	notify(notifications []string)
+	notify(notifications []Notification)
+	Name() string
 }

@@ -111,15 +111,23 @@ func (j *JenkinsModule) UpdateExternalData() {
 	}
 
 	if len(newJobDetails) > 0 {
-		message := "Es gibt neue Jenkins-Jobs\n"
-		for _, job := range newJobDetails {
-			message = message + "- " + job.Name + " -> " + job.Url + "\n"
-		}
-		j.notificationModule.AddNotification(message)
+		j.notificationModule.AddNotification(prepareJenkinsNotification(newJobDetails))
 	}
 
 	j.jobs = allJobDetails
 	fmt.Printf("  - Updated %d jobs\n", len(j.jobs))
+}
+
+func prepareJenkinsNotification(newJobDetails []Job) Notification {
+	text := ""
+	for _, job := range newJobDetails {
+		text = text + "- [" + job.Name + "](" + job.Url + ")\\n"
+	}
+	return Notification{
+		Title:   "New jenkins jobs found",
+		Text:    text,
+		IconUrl: "https://raw.githubusercontent.com/sne11ius/furbnicator/main/jenkins-logo.jpeg",
+	}
 }
 
 func (j *JenkinsModule) WriteExternalData(file *os.File) {

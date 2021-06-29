@@ -35,6 +35,10 @@ func (a *ActivationModule) IsModuleActive(module Module) bool {
 	return a.moduleActivations[module.Name()]
 }
 
+func (a *ActivationModule) IsNotificationModuleActive(module NotificationModule) bool {
+	return a.moduleActivations[module.Name()]
+}
+
 func (a *ActivationModule) UpdateSettings() {
 	for i := range modules {
 		module := modules[i]
