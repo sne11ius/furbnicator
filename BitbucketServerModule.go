@@ -187,7 +187,7 @@ func (b *BitbucketServerModule) WriteExternalData(file *os.File) {
 func (b *BitbucketServerModule) ReadExternalData(data []byte) error {
 	err := json.Unmarshal(data, &b.repositoriesWithReadme)
 	if err != nil {
-		log.Fatalf("Cannot read bitbucket project cache. Consider running with `-u` parameter.")
+		log.Fatalf("Cannot read bitbucket project cache. Please run with `-u` parameter first.")
 	}
 	return nil
 }

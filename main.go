@@ -247,7 +247,7 @@ func readCacheDataForActiveModules() {
 	for _, module := range activeModules {
 		if module.NeedsExternalData() {
 			if err := readCacheDataForModule(module); err != nil {
-				log.Fatalf("Cannot read configuration for module %s. Consider running with `-u` parameter first. (%v)", module.Name(), err)
+				log.Fatalf("Cannot read configuration for module %s. Please run with `-u` parameter first. (%v)", module.Name(), err)
 			}
 		}
 	}
