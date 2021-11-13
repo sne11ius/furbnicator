@@ -103,6 +103,13 @@ func (t TimestampModule) CreateActions(tags []Tag) []action {
 			value:  strconv.FormatInt(tsJava, 10),
 		})
 	}
+	strs = []string{"timestamp", "ts"}
+	if DoMatch(strs, tags) {
+		actions = append(actions, TimestampAction{
+			tstype: "date-time",
+			value:  now.Format("20060102150405"),
+		})
+	}
 	return actions
 }
 
