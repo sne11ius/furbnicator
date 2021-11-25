@@ -248,7 +248,13 @@ func (b *BitbucketModule) UpdateExternalData() {
 func prepareBitbucketNotification(createdRepos []BitbucketRepositoryWithReadme) Notification {
 	text := ""
 	for _, repo := range createdRepos {
-		text = text + "- " + repo.Repository.Name + "\\n"
+		iter := reflect.ValueOf(repo.Repository.Links["html"]).MapRange()
+		var htmlLink string
+		for iter.Next() {
+			htmlLink = iter.Value().Interface().(string)
+			break
+		}
+		text = text + "- [" + repo.Repository.Name + "](" + htmlLink + ")\\n"
 	}
 	return Notification{
 		Title:   "New bitbucket repositories found",
