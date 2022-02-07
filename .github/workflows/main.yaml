@@ -1,10 +1,14 @@
-on: [push]
-name: Release
+name: Create Release and Publish
+
+on:
+  push:
+    tags:
+      - 'v*'
+
 jobs:
   create-release:
     name: Create Release
     runs-on: ubuntu-latest
-    if: contains(github.ref, 'v')
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -18,107 +22,24 @@ jobs:
           release_name: Release ${{ github.ref }}
           draft: false
           prerelease: false
-      - name: 'Write Upload URL To File'
-        run: |
-          echo "${{steps.create_release.outputs.upload_url}}" > upload_url.txt
-      - name: 'Publish Upload URL'
-        uses: actions/upload-artifact@v2-preview
-        with:
-          name: 'upload_url.txt'
-          path: 'upload_url.txt'
-
-  release:
-    needs: [ create-release ]
+  releases-matrix:
+    name: Release Binaries
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        go-version: [1.15.x]
-        os: [ubuntu-latest, macos-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
+        goos: [linux, windows, darwin]
+        goarch: [amd64, arm64]
+        exclude:
+          - goarch: arm64
+            goos: windows
     steps:
-      - uses: actions/cache@v2
-        with:
-          path: |
-            ~/go/pkg/mod              # Module download cache
-            ~/.cache/go-build         # Build cache (Linux)
-            ~/Library/Caches/go-build # Build cache (Mac)
-            '%LocalAppData%\go-build' # Build cache (Windows)
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-      - name: Install Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: ${{ matrix.go-version }}
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Build
-        run: go build -ldflags "-s -w"
-      - name: Compress windows binary
-        if: startsWith(matrix.os, 'windows')
-        uses: svenstaro/upx-action@v2
-        with:
-          file: furbnicator.exe
-      - name: Compress other binary
-        if: ${{ !startsWith(matrix.os, 'windows') }}
-        uses: svenstaro/upx-action@v2
-        with:
-          file: furbnicator
-          # We don't strip on macOS since it ... doesn't work.
-          strip: ${{ !startsWith(matrix.os, 'macOS') }}
-      - name: Upload windows assets
-        if: startsWith(matrix.os, 'windows')
-        uses: actions/upload-artifact@v2
-        with:
-          name: furbnicator_${{ matrix.os }}.exe
-          path: furbnicator*
-      - name: Upload other assets
-        if: ${{ !startsWith(matrix.os, 'windows') }}
-        uses: actions/upload-artifact@v2
-        with:
-          name: furbnicator_${{ matrix.os }}
-          path: furbnicator*
-
-      - name: 'Download Release URL'
-        if: contains(github.ref, 'v')
-        uses: actions/download-artifact@v2-preview
-        with:
-          name: 'upload_url.txt'
-
-      - name: 'Set Upload URL Env Var'
-        if: contains(github.ref, 'v')
-        run: |
-          echo "UPLOAD_URL=$(cat upload_url.txt)" >> $GITHUB_ENV
-        shell: bash
-
-      - name: 'Upload Windows Release Asset'
-        if: contains(github.ref, 'v') && startsWith(matrix.os, 'windows')
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-        with:
-          upload_url: ${{env.UPLOAD_URL}}
-          asset_path: furbnicator.exe
-          asset_name: fu.exe
-          asset_content_type: application/octet-stream
-
-      - name: 'Upload linux release assets'
-        if: contains(github.ref, 'v') && startsWith(matrix.os, 'ubuntu')
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-        with:
-          upload_url: ${{ env.UPLOAD_URL }}
-          asset_path: furbnicator
-          asset_name: fu
-          asset_content_type: application/octet-stream
-
-      - name: 'Upload macos release assets'
-        if: contains(github.ref, 'v') && startsWith(matrix.os, 'macos')
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-        with:
-          upload_url: ${{ env.UPLOAD_URL }}
-          asset_path: furbnicator
-          asset_name: fu_mac
-          asset_content_type: application/octet-stream
+    - uses: actions/checkout@v2
+    - uses: wangyoucao577/go-release-action@v1.24
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        goos: ${{ matrix.goos }}
+        goarch: ${{ matrix.goarch }}
+        binary_name: "fu"
+        extra_files: LICENSE README.md
+        executable_compression: upx
+        ldflags: "-s -w"
