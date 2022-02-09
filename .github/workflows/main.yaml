@@ -42,4 +42,3 @@ jobs:
         binary_name: "fu"
         extra_files: LICENSE README.md
         executable_compression: upx
-        ldflags: "-s -w"
